@@ -16,17 +16,20 @@ let watchId: number | null = null
 
 const KUNGSLEDEN_MID: [number, number] = [17.5, 67.5]
 
-const LM_TOKEN = import.meta.env.VITE_LANTMATERIET_TOKEN as string | undefined
+const LM_USER = import.meta.env.VITE_LM_USER as string | undefined
+const LM_PASS = import.meta.env.VITE_LM_PASS as string | undefined
+const LM_AUTH = LM_USER && LM_PASS ? 'Basic ' + btoa(`${LM_USER}:${LM_PASS}`) : undefined
+const LM_LAYER = 'topowebbkartan'
 
 type BasemapKey = 'lantmateriet' | 'opentopo'
-const activeBasemap = ref<BasemapKey>(LM_TOKEN ? 'lantmateriet' : 'opentopo')
+const activeBasemap = ref<BasemapKey>(LM_AUTH ? 'lantmateriet' : 'opentopo')
 
 function buildStyle(key: BasemapKey): maplibregl.StyleSpecification {
-  if (key === 'lantmateriet' && LM_TOKEN) {
+  if (key === 'lantmateriet' && LM_AUTH) {
     const url =
-      `https://api.lantmateriet.se/open/topowebb-ccby/v1/wmts/token/${LM_TOKEN}` +
-      `/?service=WMTS&request=GetTile&version=1.0.0&layer=topowebb&style=default` +
-      `&tilematrixset=3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png`
+      `https://maps.lantmateriet.se/open/topowebb-ccby/v1/wmts` +
+      `?service=WMTS&request=GetTile&version=1.0.0&layer=${LM_LAYER}` +
+      `&style=default&tilematrixset=3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png`
     return {
       version: 8,
       sources: {
@@ -177,6 +180,12 @@ onMounted(() => {
     center: KUNGSLEDEN_MID,
     zoom: 6,
     attributionControl: { compact: true },
+    transformRequest: (url) => {
+      if (LM_AUTH && url.startsWith('https://maps.lantmateriet.se/')) {
+        return { url, headers: { Authorization: LM_AUTH } }
+      }
+      return { url }
+    },
   })
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right')
 })
@@ -218,11 +227,11 @@ const statusLabel: Record<typeof status.value, string> = {
         <button v-if="status !== 'located' && status !== 'locating'" @click="locate">
           {{ status === 'idle' ? 'Locate me' : 'Retry' }}
         </button>
-        <button v-if="LM_TOKEN" @click="switchBasemap">
+        <button v-if="LM_AUTH" @click="switchBasemap">
           {{ activeBasemap === 'lantmateriet' ? 'Switch to OpenTopo' : 'Switch to Lantmäteriet' }}
         </button>
       </div>
-      <div class="basemap-tag">basemap: {{ activeBasemap }}{{ LM_TOKEN ? '' : ' (no LM token)' }}</div>
+      <div class="basemap-tag">basemap: {{ activeBasemap }}{{ LM_AUTH ? '' : ' (no LM creds)' }}</div>
     </div>
   </div>
 </template>
