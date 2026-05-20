@@ -10,6 +10,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'logo.svg'],
       manifest: {
+        id: '/kungsleden-app/',
         name: 'Kungsleden Planning',
         short_name: 'Kungsleden',
         description: 'Hemavan → Abisko thru-hike planner',
