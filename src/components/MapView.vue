@@ -19,7 +19,7 @@ const KUNGSLEDEN_MID: [number, number] = [17.5, 67.5]
 const LM_USER = import.meta.env.VITE_LM_USER as string | undefined
 const LM_PASS = import.meta.env.VITE_LM_PASS as string | undefined
 const LM_AUTH = LM_USER && LM_PASS ? 'Basic ' + btoa(`${LM_USER}:${LM_PASS}`) : undefined
-const LM_LAYER = 'topowebbkartan'
+const LM_LAYER = 'topowebb_nedtonad'
 
 type BasemapKey = 'lantmateriet' | 'opentopo'
 const activeBasemap = ref<BasemapKey>(LM_AUTH ? 'lantmateriet' : 'opentopo')
@@ -38,7 +38,7 @@ function buildStyle(key: BasemapKey): maplibregl.StyleSpecification {
           tiles: [url],
           tileSize: 256,
           attribution: '© Lantmäteriet',
-          maxzoom: 14,
+          maxzoom: 9,
         },
       },
       layers: [{ id: 'lantmateriet', type: 'raster', source: 'lantmateriet' }],
