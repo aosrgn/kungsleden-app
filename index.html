@@ -4,31 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0a3d2e" />
-    <title>Kungsleden Planning PWA</title>
-    <style>
-      :root { color-scheme: light dark; }
-      html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-      body { display: flex; flex-direction: column; min-height: 100vh; background: #f4f1ea; color: #1a1a1a; }
-      @media (prefers-color-scheme: dark) {
-        body { background: #14110d; color: #e8e4dc; }
-      }
-      main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; }
-      h1 { font-size: clamp(1.75rem, 5vw, 2.5rem); margin: 0 0 0.5rem; letter-spacing: -0.02em; }
-      .tag { opacity: 0.6; font-size: 0.9rem; }
-      .marker { margin-top: 2rem; font-size: 3rem; }
-      footer { padding: 1rem; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; opacity: 0.5; border-top: 1px solid currentColor; border-color: color-mix(in srgb, currentColor 15%, transparent); }
-      footer code { font-family: inherit; }
-    </style>
+    <link rel="icon" type="image/svg+xml" href="/kungsleden-app/logo.svg" />
+    <title>Kungsleden Planning</title>
   </head>
   <body>
-    <main>
-      <h1>Kungsleden Planning PWA</h1>
-      <p class="tag">Loop validation — Hemavan → Abisko, Aug 2026</p>
-      <div class="marker">🥾</div>
-      <p class="tag">deploy loop: validated ✓</p>
-    </main>
-    <footer>
-      build <code id="sha">__COMMIT_SHA__</code> · <code id="ts">__BUILD_TIME__</code>
-    </footer>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

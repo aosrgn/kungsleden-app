@@ -25,23 +25,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Stamp build metadata
-        run: |
-          SHA="${GITHUB_SHA::7}"
-          TS="$(date -u +'%Y-%m-%d %H:%M UTC')"
-          sed -i "s|__COMMIT_SHA__|${SHA}|g" index.html
-          sed -i "s|__BUILD_TIME__|${TS}|g" index.html
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
 
-      - name: Prepare site directory
+      - run: npm ci
+
+      - name: Build
         run: |
-          mkdir -p _site
-          cp index.html _site/
+          export VITE_COMMIT_SHA="${GITHUB_SHA::7}"
+          export VITE_BUILD_TIME="$(date -u +'%Y-%m-%d %H:%M UTC')"
+          npm run build
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: dist
 
   deploy:
     needs: build
