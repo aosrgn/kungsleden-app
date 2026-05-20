@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - claude/brainstorm-optimize-ITvoa
+      - claude/fix-constraint-solver-issue-fUJdC
   workflow_dispatch:
 
 permissions:
