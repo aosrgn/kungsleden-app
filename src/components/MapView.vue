@@ -1,86 +1,67 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, useTemplateRef } from 'vue'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-import markerIcon from 'leaflet/dist/images/marker-icon.png'
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
-import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+import maplibregl, { type Map as MLMap, type GeolocateControl } from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
 
 const mapEl = useTemplateRef<HTMLDivElement>('mapEl')
 const status = ref<'idle' | 'locating' | 'located' | 'denied' | 'unavailable' | 'error'>('idle')
 const coords = ref<{ lat: number; lng: number; acc: number } | null>(null)
 
-let map: L.Map | null = null
-let userMarker: L.Marker | null = null
-let userCircle: L.Circle | null = null
-let watchId: number | null = null
+let map: MLMap | null = null
+let geolocate: GeolocateControl | null = null
 
-const defaultIcon = L.icon({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-})
-
-const KUNGSLEDEN_MID: L.LatLngTuple = [67.5, 17.5]
-
-function updateUserPosition(pos: GeolocationPosition, recenter: boolean) {
-  if (!map) return
-  const { latitude, longitude, accuracy } = pos.coords
-  coords.value = { lat: latitude, lng: longitude, acc: accuracy }
-  status.value = 'located'
-
-  const latlng: L.LatLngTuple = [latitude, longitude]
-  if (!userMarker) {
-    userMarker = L.marker(latlng, { icon: defaultIcon }).addTo(map)
-    userCircle = L.circle(latlng, { radius: accuracy, color: '#0a3d2e', fillOpacity: 0.1 }).addTo(map)
-  } else {
-    userMarker.setLatLng(latlng)
-    userCircle?.setLatLng(latlng).setRadius(accuracy)
-  }
-  if (recenter) map.setView(latlng, 13)
-}
-
-function locate() {
-  if (!('geolocation' in navigator)) {
-    status.value = 'unavailable'
-    return
-  }
-  status.value = 'locating'
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      updateUserPosition(pos, true)
-      watchId = navigator.geolocation.watchPosition(
-        (p) => updateUserPosition(p, false),
-        () => {},
-        { enableHighAccuracy: true, maximumAge: 5000 },
-      )
-    },
-    (err) => {
-      status.value = err.code === err.PERMISSION_DENIED ? 'denied' : 'error'
-    },
-    { enableHighAccuracy: true, timeout: 10000 },
-  )
-}
+const KUNGSLEDEN_MID: [number, number] = [17.5, 67.5]
+const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty'
 
 onMounted(() => {
   if (!mapEl.value) return
-  map = L.map(mapEl.value, { zoomControl: true }).setView(KUNGSLEDEN_MID, 7)
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  }).addTo(map)
-  locate()
+
+  map = new maplibregl.Map({
+    container: mapEl.value,
+    style: STYLE_URL,
+    center: KUNGSLEDEN_MID,
+    zoom: 6,
+    attributionControl: { compact: true },
+  })
+
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right')
+
+  geolocate = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true, timeout: 10000 },
+    trackUserLocation: true,
+    showAccuracyCircle: true,
+    fitBoundsOptions: { maxZoom: 13 },
+  })
+  map.addControl(geolocate, 'top-right')
+
+  geolocate.on('geolocate', (e) => {
+    const p = e as unknown as { coords: GeolocationCoordinates }
+    coords.value = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }
+    status.value = 'located'
+  })
+
+  geolocate.on('error', (err) => {
+    const code = (err as unknown as { code?: number }).code
+    status.value = code === 1 ? 'denied' : code === 2 ? 'unavailable' : 'error'
+  })
+
+  geolocate.on('trackuserlocationstart', () => { status.value = 'locating' })
+
+  map.on('load', () => {
+    status.value = 'locating'
+    geolocate?.trigger()
+  })
 })
 
 onBeforeUnmount(() => {
-  if (watchId !== null) navigator.geolocation.clearWatch(watchId)
   map?.remove()
   map = null
 })
+
+function retry() {
+  status.value = 'locating'
+  geolocate?.trigger()
+}
 
 const statusLabel: Record<typeof status.value, string> = {
   idle: '',
@@ -103,7 +84,9 @@ const statusLabel: Record<typeof status.value, string> = {
       <div v-if="coords" class="coords">
         {{ coords.lat.toFixed(5) }}, {{ coords.lng.toFixed(5) }} · ±{{ Math.round(coords.acc) }}m
       </div>
-      <button v-if="status === 'denied' || status === 'error'" @click="locate">Retry</button>
+      <button v-if="status === 'denied' || status === 'error' || status === 'unavailable'" @click="retry">
+        Retry
+      </button>
     </div>
   </div>
 </template>
@@ -123,7 +106,6 @@ const statusLabel: Record<typeof status.value, string> = {
   position: absolute;
   top: env(safe-area-inset-top, 0);
   left: 0;
-  right: 0;
   margin: 0.75rem;
   padding: 0.6rem 0.8rem;
   background: rgba(255, 255, 255, 0.92);
@@ -132,14 +114,15 @@ const statusLabel: Record<typeof status.value, string> = {
   font-size: 0.85rem;
   color: #1a1a1a;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  pointer-events: auto;
   z-index: 1000;
+  max-width: calc(100vw - 6rem);
 }
 
 .row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .status {
