@@ -15,7 +15,51 @@ let userMarker: Marker | null = null
 let watchId: number | null = null
 
 const KUNGSLEDEN_MID: [number, number] = [17.5, 67.5]
-const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty'
+
+const LM_TOKEN = import.meta.env.VITE_LANTMATERIET_TOKEN as string | undefined
+
+type BasemapKey = 'lantmateriet' | 'opentopo'
+const activeBasemap = ref<BasemapKey>(LM_TOKEN ? 'lantmateriet' : 'opentopo')
+
+function buildStyle(key: BasemapKey): maplibregl.StyleSpecification {
+  if (key === 'lantmateriet' && LM_TOKEN) {
+    const url =
+      `https://api.lantmateriet.se/open/topowebb-ccby/v1/wmts/token/${LM_TOKEN}` +
+      `/?service=WMTS&request=GetTile&version=1.0.0&layer=topowebb&style=default` +
+      `&tilematrixset=3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png`
+    return {
+      version: 8,
+      sources: {
+        lantmateriet: {
+          type: 'raster',
+          tiles: [url],
+          tileSize: 256,
+          attribution: '© Lantmäteriet',
+          maxzoom: 14,
+        },
+      },
+      layers: [{ id: 'lantmateriet', type: 'raster', source: 'lantmateriet' }],
+    }
+  }
+  return {
+    version: 8,
+    sources: {
+      opentopo: {
+        type: 'raster',
+        tiles: [
+          'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
+          'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
+          'https://c.tile.opentopomap.org/{z}/{x}/{y}.png',
+        ],
+        tileSize: 256,
+        attribution:
+          'Map data: &copy; OpenStreetMap contributors, SRTM | Style: &copy; OpenTopoMap (CC-BY-SA)',
+        maxzoom: 17,
+      },
+    },
+    layers: [{ id: 'opentopo', type: 'raster', source: 'opentopo' }],
+  }
+}
 
 function makeMarkerEl(): HTMLDivElement {
   const el = document.createElement('div')
@@ -75,6 +119,12 @@ function tryGet(strategy: Strategy): Promise<GeolocationPosition> {
   })
 }
 
+function switchBasemap() {
+  if (!map) return
+  activeBasemap.value = activeBasemap.value === 'lantmateriet' ? 'opentopo' : 'lantmateriet'
+  map.setStyle(buildStyle(activeBasemap.value))
+}
+
 async function locate() {
   if (!('geolocation' in navigator)) {
     status.value = 'unavailable'
@@ -123,7 +173,7 @@ onMounted(() => {
 
   map = new maplibregl.Map({
     container: mapEl.value,
-    style: STYLE_URL,
+    style: buildStyle(activeBasemap.value),
     center: KUNGSLEDEN_MID,
     zoom: 6,
     attributionControl: { compact: true },
@@ -164,9 +214,15 @@ const statusLabel: Record<typeof status.value, string> = {
         <div>permission: {{ permState }}</div>
         <div v-if="lastError">err: {{ lastError }}</div>
       </div>
-      <button v-if="status !== 'located' && status !== 'locating'" @click="locate">
-        {{ status === 'idle' ? 'Locate me' : 'Retry' }}
-      </button>
+      <div class="actions">
+        <button v-if="status !== 'located' && status !== 'locating'" @click="locate">
+          {{ status === 'idle' ? 'Locate me' : 'Retry' }}
+        </button>
+        <button v-if="LM_TOKEN" @click="switchBasemap">
+          {{ activeBasemap === 'lantmateriet' ? 'Switch to OpenTopo' : 'Switch to Lantmäteriet' }}
+        </button>
+      </div>
+      <div class="basemap-tag">basemap: {{ activeBasemap }}{{ LM_TOKEN ? '' : ' (no LM token)' }}</div>
     </div>
   </div>
 </template>
@@ -209,8 +265,21 @@ const statusLabel: Record<typeof status.value, string> = {
   line-height: 1.4;
 }
 
-button {
+.actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
   margin-top: 0.4rem;
+}
+
+.basemap-tag {
+  margin-top: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  opacity: 0.55;
+}
+
+button {
   padding: 0.3rem 0.6rem;
   border: 1px solid #0a3d2e;
   background: #0a3d2e;

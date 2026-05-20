@@ -33,6 +33,8 @@ jobs:
       - run: npm ci
 
       - name: Build
+        env:
+          VITE_LANTMATERIET_TOKEN: ${{ secrets.LANTMATERIET_TOKEN }}
         run: |
           export VITE_COMMIT_SHA="${GITHUB_SHA::7}"
           export VITE_BUILD_TIME="$(date -u +'%Y-%m-%d %H:%M UTC')"

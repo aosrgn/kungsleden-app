@@ -16,7 +16,7 @@ export default defineConfig({
         description: 'Hemavan → Abisko thru-hike planner',
         theme_color: '#0a3d2e',
         background_color: '#f4f1ea',
-        display: 'browser',
+        display: 'standalone',
         start_url: '/',
         scope: '/',
         icons: [
