@@ -8,7 +8,6 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: false,
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'logo.svg'],
       manifest: {
         id: '/',
@@ -17,7 +16,7 @@ export default defineConfig({
         description: 'Hemavan → Abisko thru-hike planner',
         theme_color: '#0a3d2e',
         background_color: '#f4f1ea',
-        display: 'standalone',
+        display: 'browser',
         start_url: '/',
         scope: '/',
         icons: [
