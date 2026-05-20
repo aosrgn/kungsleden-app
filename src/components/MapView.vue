@@ -23,45 +23,65 @@ const LM_LAYER = 'topowebb_nedtonad'
 
 type BasemapKey = 'lantmateriet' | 'opentopo'
 const activeBasemap = ref<BasemapKey>(LM_AUTH ? 'lantmateriet' : 'opentopo')
+const trailsVisible = ref<boolean>(true)
 
-function buildStyle(key: BasemapKey): maplibregl.StyleSpecification {
-  if (key === 'lantmateriet' && LM_AUTH) {
-    const url =
-      `https://maps.lantmateriet.se/open/topowebb-ccby/v1/wmts` +
-      `?service=WMTS&request=GetTile&version=1.0.0&layer=${LM_LAYER}` +
-      `&style=default&tilematrixset=3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png`
-    return {
-      version: 8,
-      sources: {
-        lantmateriet: {
-          type: 'raster',
-          tiles: [url],
-          tileSize: 256,
-          attribution: '© Lantmäteriet',
-          maxzoom: 9,
-        },
-      },
-      layers: [{ id: 'lantmateriet', type: 'raster', source: 'lantmateriet' }],
-    }
-  }
-  return {
-    version: 8,
-    sources: {
-      opentopo: {
-        type: 'raster',
-        tiles: [
-          'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
-          'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
-          'https://c.tile.opentopomap.org/{z}/{x}/{y}.png',
-        ],
-        tileSize: 256,
-        attribution:
-          'Map data: &copy; OpenStreetMap contributors, SRTM | Style: &copy; OpenTopoMap (CC-BY-SA)',
-        maxzoom: 17,
-      },
+const LM_TILE_URL =
+  `https://maps.lantmateriet.se/open/topowebb-ccby/v1/wmts` +
+  `?service=WMTS&request=GetTile&version=1.0.0&layer=${LM_LAYER}` +
+  `&style=default&tilematrixset=3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png`
+
+function buildStyle(): maplibregl.StyleSpecification {
+  const sources: maplibregl.StyleSpecification['sources'] = {
+    opentopo: {
+      type: 'raster',
+      tiles: [
+        'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
+        'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
+        'https://c.tile.opentopomap.org/{z}/{x}/{y}.png',
+      ],
+      tileSize: 256,
+      attribution:
+        'Map data: &copy; OSM contributors, SRTM | Style: &copy; OpenTopoMap (CC-BY-SA)',
+      maxzoom: 17,
     },
-    layers: [{ id: 'opentopo', type: 'raster', source: 'opentopo' }],
+    hiking: {
+      type: 'raster',
+      tiles: ['https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      attribution: '&copy; <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>',
+      maxzoom: 18,
+    },
   }
+  const layers: maplibregl.LayerSpecification[] = [
+    {
+      id: 'opentopo',
+      type: 'raster',
+      source: 'opentopo',
+      layout: { visibility: activeBasemap.value === 'opentopo' ? 'visible' : 'none' },
+    },
+  ]
+  if (LM_AUTH) {
+    sources.lantmateriet = {
+      type: 'raster',
+      tiles: [LM_TILE_URL],
+      tileSize: 256,
+      attribution: '© Lantmäteriet',
+      maxzoom: 9,
+    }
+    layers.unshift({
+      id: 'lantmateriet',
+      type: 'raster',
+      source: 'lantmateriet',
+      layout: { visibility: activeBasemap.value === 'lantmateriet' ? 'visible' : 'none' },
+    })
+  }
+  layers.push({
+    id: 'hiking',
+    type: 'raster',
+    source: 'hiking',
+    layout: { visibility: trailsVisible.value ? 'visible' : 'none' },
+  })
+  return { version: 8, sources, layers }
 }
 
 function makeMarkerEl(): HTMLDivElement {
@@ -125,7 +145,20 @@ function tryGet(strategy: Strategy): Promise<GeolocationPosition> {
 function switchBasemap() {
   if (!map) return
   activeBasemap.value = activeBasemap.value === 'lantmateriet' ? 'opentopo' : 'lantmateriet'
-  map.setStyle(buildStyle(activeBasemap.value))
+  if (map.getLayer('opentopo')) {
+    map.setLayoutProperty('opentopo', 'visibility', activeBasemap.value === 'opentopo' ? 'visible' : 'none')
+  }
+  if (map.getLayer('lantmateriet')) {
+    map.setLayoutProperty('lantmateriet', 'visibility', activeBasemap.value === 'lantmateriet' ? 'visible' : 'none')
+  }
+}
+
+function toggleTrails() {
+  if (!map) return
+  trailsVisible.value = !trailsVisible.value
+  if (map.getLayer('hiking')) {
+    map.setLayoutProperty('hiking', 'visibility', trailsVisible.value ? 'visible' : 'none')
+  }
 }
 
 async function locate() {
@@ -176,7 +209,7 @@ onMounted(() => {
 
   map = new maplibregl.Map({
     container: mapEl.value,
-    style: buildStyle(activeBasemap.value),
+    style: buildStyle(),
     center: KUNGSLEDEN_MID,
     zoom: 6,
     attributionControl: { compact: true },
@@ -229,6 +262,9 @@ const statusLabel: Record<typeof status.value, string> = {
         </button>
         <button v-if="LM_AUTH" @click="switchBasemap">
           {{ activeBasemap === 'lantmateriet' ? 'Switch to OpenTopo' : 'Switch to Lantmäteriet' }}
+        </button>
+        <button @click="toggleTrails">
+          Trails: {{ trailsVisible ? 'on' : 'off' }}
         </button>
       </div>
       <div class="basemap-tag">basemap: {{ activeBasemap }}{{ LM_AUTH ? '' : ' (no LM creds)' }}</div>
