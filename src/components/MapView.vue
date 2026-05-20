@@ -50,7 +50,32 @@ function onError(err: GeolocationPositionError) {
   status.value = err.code === 1 ? 'denied' : err.code === 2 ? 'unavailable' : 'error'
 }
 
-function locate() {
+type Strategy = 'minimal' | 'low-acc' | 'delayed'
+
+function startWatch() {
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId)
+  watchId = navigator.geolocation.watchPosition(
+    (p) => onPosition(p, false),
+    (err) => onError(err),
+    { enableHighAccuracy: true, maximumAge: 5000 },
+  )
+}
+
+function tryGet(strategy: Strategy): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    const success = (p: GeolocationPosition) => resolve(p)
+    const fail = (e: GeolocationPositionError) => reject(e)
+    if (strategy === 'minimal') {
+      navigator.geolocation.getCurrentPosition(success, fail)
+    } else if (strategy === 'low-acc') {
+      navigator.geolocation.getCurrentPosition(success, fail, { enableHighAccuracy: false })
+    } else {
+      setTimeout(() => navigator.geolocation.getCurrentPosition(success, fail), 0)
+    }
+  })
+}
+
+async function locate() {
   if (!('geolocation' in navigator)) {
     status.value = 'unavailable'
     lastError.value = 'navigator.geolocation undefined'
@@ -58,19 +83,22 @@ function locate() {
   }
   status.value = 'locating'
   lastError.value = ''
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
+
+  const strategies: Strategy[] = ['minimal', 'low-acc', 'delayed']
+  for (const s of strategies) {
+    try {
+      const pos = await tryGet(s)
+      lastError.value = `ok via ${s}`
       onPosition(pos, true)
-      if (watchId !== null) navigator.geolocation.clearWatch(watchId)
-      watchId = navigator.geolocation.watchPosition(
-        (p) => onPosition(p, false),
-        (err) => onError(err),
-        { enableHighAccuracy: true, maximumAge: 5000 },
-      )
-    },
-    (err) => onError(err),
-    { enableHighAccuracy: true, timeout: 10000 },
-  )
+      startWatch()
+      return
+    } catch (e) {
+      const err = e as GeolocationPositionError
+      lastError.value = `${s}: code=${err.code} "${err.message}"`
+      if (err.code !== 1) break
+    }
+  }
+  status.value = lastError.value.includes('code=1') ? 'denied' : 'error'
 }
 
 async function refreshPermState() {
