@@ -48,8 +48,7 @@ onMounted(() => {
   geolocate.on('trackuserlocationstart', () => { status.value = 'locating' })
 
   map.on('load', () => {
-    status.value = 'locating'
-    geolocate?.trigger()
+    status.value = 'idle'
   })
 })
 
@@ -58,9 +57,10 @@ onBeforeUnmount(() => {
   map = null
 })
 
-function retry() {
+function locate() {
+  if (!geolocate) return
   status.value = 'locating'
-  geolocate?.trigger()
+  geolocate.trigger()
 }
 
 const statusLabel: Record<typeof status.value, string> = {
@@ -84,8 +84,8 @@ const statusLabel: Record<typeof status.value, string> = {
       <div v-if="coords" class="coords">
         {{ coords.lat.toFixed(5) }}, {{ coords.lng.toFixed(5) }} · ±{{ Math.round(coords.acc) }}m
       </div>
-      <button v-if="status === 'denied' || status === 'error' || status === 'unavailable'" @click="retry">
-        Retry
+      <button v-if="status !== 'located' && status !== 'locating'" @click="locate">
+        {{ status === 'idle' ? 'Locate me' : 'Retry' }}
       </button>
     </div>
   </div>
