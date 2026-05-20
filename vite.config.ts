@@ -3,22 +3,22 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  base: '/kungsleden-app/',
+  base: '/',
   plugins: [
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'logo.svg'],
       manifest: {
-        id: '/kungsleden-app/',
+        id: '/',
         name: 'Kungsleden Planning',
         short_name: 'Kungsleden',
         description: 'Hemavan → Abisko thru-hike planner',
         theme_color: '#0a3d2e',
         background_color: '#f4f1ea',
         display: 'standalone',
-        start_url: '/kungsleden-app/',
-        scope: '/kungsleden-app/',
+        start_url: '/',
+        scope: '/',
         icons: [
           { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
