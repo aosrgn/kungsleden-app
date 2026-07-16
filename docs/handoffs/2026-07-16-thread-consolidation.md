@@ -40,7 +40,7 @@ The user rejected multi-layer storage (Cache API + IDB + file-import backup) as 
 
 Pre-trek confidence ritual: install PWA on WiFi → download offline map → airplane mode → force-quit → reopen → confirm map loads at every zoom. If passes 24h airplane-mode test, ships.
 
-## Trip parameters (superseded original brief — from `kungsleden-map/diary.csv`)
+## Trip parameters (superseded original brief — from `../data/diary.csv`)
 
 Original brief said Aug 8–29 / 440 km. **Diary is authoritative**:
 - **Start Aug 2, arrive Abisko Aug 19, train to Kiruna Aug 21, fly KRN 09:50 Aug 22.**

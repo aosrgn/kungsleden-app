@@ -7,9 +7,9 @@ Live at [inthetech.dev](https://inthetech.dev). Deploys to GitHub Pages on push 
 ## Core design inversion
 The plan is a **derived view**, not the source of truth. Position + expected pace + static trip data → all live-computed stats. There is no persisted "plan" to keep in sync.
 
-## Sibling projects
-- **`~/Development/kungsleden-map/`** — data authority. Holds `diary.csv` (source-tagged, semicolon-delimited, authoritative POI + gate data), `kungsleden.geojson` (trail + POIs from Naturkartan), `Footpath Export.gpx`, plus markdown docs (trip plan, huts-facilities, transport, booking-checklist). **Regenerates the GPX consumed by both this PWA AND an external nav app** — keep the GPX standards-compliant.
-- **`~/Development/kungsleden-power/`** — battery + solar simulation for the trek. Independent Node CLI. Not touched by this PWA.
+## Sibling projects (all under `~/Development/kungsleden/`)
+- **`../data/`** (was `~/Development/kungsleden-map`) — data authority. Holds `diary.csv` (source-tagged, semicolon-delimited, authoritative POI + gate data), `kungsleden.geojson` (trail + POIs from Naturkartan), `Footpath Export.gpx`, plus markdown docs (trip plan, huts-facilities, transport, booking-checklist). **Regenerates the GPX consumed by both this PWA AND an external nav app** — keep the GPX standards-compliant.
+- **`../power/`** (was `~/Development/kungsleden-power`) — battery + solar simulation for the trek. Independent Node CLI. Not touched by this PWA.
 
 ## Data flow (single path, no fanciness)
 - Trip data files (`diary.csv`, `kungsleden.geojson`) ship with the app AND can be reuploaded from iOS Files picker at runtime.
