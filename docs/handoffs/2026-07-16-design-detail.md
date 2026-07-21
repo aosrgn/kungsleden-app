@@ -216,7 +216,34 @@ Real gates (from `../data/diary.csv`):
 ### Algorithm
 - Standard DP (backward from `(day N, ≥ Abisko km)` to `(day 0, Hemavan km)`) computing `best_score[d][e]`.
 - Runtime: ~18 days × ~460 km-buckets × ~30 next-day-reachable = ~250k edge evaluations. Sub-100ms in JS.
-- **NOT** a constraint solver (OR-tools, MiniZinc, MILP). Explicitly considered and rejected: overkill for this state space, adds a WASM dependency, hurts debuggability, and the "why did it pick X" story is worse.
+
+### Why DP over a general constraint solver (comparison preserved from design discussion)
+
+Three solver families were considered before settling on hand-rolled DP:
+
+**CP-SAT (Constraint Programming, e.g. Google OR-Tools).** Declare integer/boolean variables and logical constraints; the solver searches. Would model as `overnight_km[day] ∈ km_grid`, monotonic-forward + max-daily-km + anchor + gate-time constraints, maximize soft-preference sum. JS bindings exist but are rough (native library shimmed via WASM). Powerful but heavyweight for this size.
+
+**MILP (Mixed-Integer Linear Programming).** `glpk.js` runs in browser. Constraints and objective must be linear — "prefer hut" is a binary variable × weight; "sauna every 4 days" is awkward to linearize. Solver overhead dwarfs the actual problem.
+
+**SAT / SMT.** Pure logical satisfiability. Overkill — the problem is continuous-ish distances plus modest time-window logic, not booleans.
+
+**Why hand-rolled DP wins:** the problem shape is a **DAG shortest/best path**, not a general CSP.
+
+- State space is tiny: 18 nights × ~460 km-buckets (or fewer with corridor pruning) ≈ **8,000 nodes**.
+- Fan-out per state is ~30 (next-day reachable end_km values within min/max daily km). Naive worst-case `40^18 ≈ 10^28` looks scary, but with monotonic-forward + max-day-km pruning the actual reachable graph is `~8^18 ≈ 10^16` unpruned — which is still too many to enumerate, but **that's not what DP does**. DP computes each `(day, end_km)` state once, taking the best over its ~30 successors. Total work: **~250k edge evaluations. Milliseconds.**
+- Top-K paths (needed for day-card scenarios) is **Yen's algorithm on the same DAG** or K-best DP. K = 3–4 in practice. Also fast.
+- Time-of-day for gate checks is *derived* along each path (start-of-day clock + cumulative segment_time), not a state variable — keeps the state space small. If flexible start times are needed later, add a 3-bucket start_time state (early/normal/late) → state × 3, still tiny.
+
+**Concrete wins over pulling in a solver library:**
+
+- **Full control over scoring.** No wrestling with linearization or CP modeling primitives.
+- **Trivial debuggability.** "Why did it pick Pårte on day 12?" → print `best_score[d][e]` values and back-pointers along the chosen path. A solver gives you an answer, not an explanation.
+- **No WASM dependency.** OR-Tools/glpk both ship WASM blobs measured in MB. Kills PWA bundle size and adds iOS Safari fragility.
+- **No library breakage risk.** Constraint solver JS bindings have low maintainer activity; a hand-rolled algorithm won't break under a library update.
+- **Plan-stability tie-breaking is one line.** Add a tiny bonus to nodes matching yesterday's plan → dedupes noisy diffs when inputs barely change. Doing this cleanly in a solver requires a warm-start API and hoping the solver honors it.
+- **Gate-violation diagnosis is natural.** If no feasible path exists, walk backward from the failure state and report which gate broke first ("can't make Sitojaure boat on day 14 at this pace — try day 13 or slow to day 15"). Much more actionable than "UNSAT."
+
+Verdict: **~200 lines of DAG + DP** beats any solver library for this problem. Rule of thumb: solvers pay off when constraints are gnarly and interconnected (nurse scheduling across wards with skill matches). Kungsleden's constraints are local and ordered — DP native.
 
 ### Top-K paths for day cards
 - Yen's algorithm on the DP graph, or K-best DP.
