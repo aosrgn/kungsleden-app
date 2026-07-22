@@ -24,7 +24,7 @@ Vue 3 + TS + Vite + `vite-plugin-pwa` + MapLibre GL. `idb-keyval` for IDB access
 - Trail line + POI markers on the map
 - Current position projected onto the trail (cumulative km)
 - Self-hosted PMTiles corridor (zoom 8–13, ~100 MB) via `pmtiles://` protocol. Hosted as a **GitHub Release asset** (2 GB cap), curled into `dist/` by `deploy.yml` at build time → served same-origin. Never committed to git (100 MB push limit + history bloat); local dev uses a gitignored copy in `public/`
-- IDB Blob storage + persist + verification badge + Settings file-picker for diary/geojson replace
+- IDB Blob storage + persist + verification badge + Settings file-picker for diary/geojson replace (uploads validated by exact header-row match, no schema-version cell)
 - Stats panel driven by position:
   - **Now**: km, section, elevation, daylight left
   - **Today**: diary-planned stop + ETA · huts reachable in end-of-day window · stop-time table (16:00→22:00 hourly) · next gate today with ETA

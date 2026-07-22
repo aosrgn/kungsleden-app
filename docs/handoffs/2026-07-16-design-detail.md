@@ -135,7 +135,7 @@ That's correct — multi-path is complexity dressed as safety. Each path has its
 ### CSV parsing detail
 - Semicolon-delimited (European CSV convention — the diary uses `;`, not `,`).
 - Parse in-browser (Papa Parse or similar lib; something small).
-- Same schema applies to bundled and user-uploaded — a schema-version cell might be worth adding to `diary.csv` before shipping so we can reject incompatible future formats gracefully.
+- Same schema applies to bundled and user-uploaded. **Decided 2026-07-21:** no schema-version cell — the parser rejects an uploaded CSV whose header row doesn't exactly match the expected columns (clear error, keep previous data). Catches wrong-file/stale-copy/renamed-column without changing the diary format for any consumer.
 
 ---
 
