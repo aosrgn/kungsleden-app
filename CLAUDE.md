@@ -1,6 +1,6 @@
 # Kungsleden Planning PWA
 
-Personal-use PWA for daily replanning during a solo Kungsleden thru-hike, **Aug 2–22 2026** (Hemavan → Abisko, ~460 km, 18 walking days + 2 buffer, no Kebnekaise, one non-hiked transfer at Saltoluokta→Vakkotavare on Day 14).
+Personal-use PWA for daily replanning during a solo Kungsleden thru-hike, **Aug 2–22 2026** (Hemavan → Abisko, ~460 km, 17 walking days + 3 buffer, no Kebnekaise, Saltoluokta→Vakkotavare transfer on Day 13, shortcut boats Tjulträsk/Bäverholmen/Alesjaure planned).
 
 Live at [inthetech.dev](https://inthetech.dev). Deploys to GitHub Pages on push to `main`.
 
