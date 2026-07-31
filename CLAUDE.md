@@ -20,11 +20,12 @@ the device position projected onto the trail line.
 
 - **Route strip** — every located diary feature as a node (icon · name · km), overnight
   stops emphasised. Position anchoring + per-node ETA layer on top.
-- **NOW** — km along route · section · elevation · daylight left.
+- **NOW** — km along route · section · daylight left. (No elevation: the trail geojson
+  is 2-D and the diary has none, so elevation is dropped everywhere.)
 - **TODAY** — planned stop + ETA · huts passed before the planned stop · next hut if
   reachable ~2 h past the stop at pace.
 - **ON-TIME** — projected Abisko finish under 4 paces (Slow 3.0 / Normal 3.5 / Fast 4.0 /
-  custom) · elevation-adjusted on-track ratio · ±days vs Plan A · buffer days left.
+  custom) · distance-based on-track ratio · ±days vs Plan A · buffer days left.
 
 Pace input: Slow (3.0) · Normal (3.5) · Fast (4.0) · custom km/h.
 
@@ -73,9 +74,10 @@ footer badge (`deploy.yml` sets `VITE_COMMIT_SHA`/`VITE_BUILD_TIME`). Confirm fr
 comparing the badge to the latest commit SHA.
 
 ## Status
-Phase 1 done: geolocation composable, map removed, data bundled + loaded, static route
-strip, manual Update button + precache. **Pending:** Phase 2 (position → km + NOW panel),
-Phase 3 (TODAY + ON-TIME + pace selector).
+Phase 1 done: geolocation composable, map removed, data bundled + loaded, route strip,
+manual Update button + precache. Phase 2 done: position → km projection (`src/trail.ts`),
+position-anchored strip, NOW panel (km · section · daylight). **Pending:** Phase 3 (TODAY
++ ON-TIME + pace selector).
 
 ## Style
 Senior TS/Vue/Node dev. Terse. No trailing summaries. Lists over prose. Verify claims

@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useGeolocation } from '../composables/useGeolocation'
 import { loadTrip, type Trip } from '../data/trip'
 import { createTrailIndex } from '../trail'
+import NowPanel from './NowPanel.vue'
 import RouteStrip from './RouteStrip.vue'
 
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
@@ -43,9 +44,7 @@ const statusLabel: Record<typeof status.value, string> = {
 
     <p v-if="coords" class="coords">
       {{ coords.lat.toFixed(5) }}, {{ coords.lng.toFixed(5) }} · ±{{ Math.round(coords.acc) }}m
-      <template v-if="position">
-        · km {{ position.km.toFixed(1) }} · {{ Math.round(position.offsetKm * 1000) }}m off-trail
-      </template>
+      <template v-if="position"> · {{ Math.round(position.offsetKm * 1000) }}m off-trail</template>
     </p>
 
     <div class="actions">
@@ -54,6 +53,14 @@ const statusLabel: Record<typeof status.value, string> = {
       </button>
     </div>
 
+    <NowPanel
+      v-if="trip"
+      :position-km="position?.km ?? null"
+      :total-km="trailIndex?.totalKm ?? 0"
+      :lat="coords?.lat ?? null"
+      :lng="coords?.lng ?? null"
+      class="now-panel"
+    />
     <RouteStrip v-if="trip" :rows="trip.diary" :position-km="position?.km ?? null" class="route" />
     <p v-else-if="dataError" class="data-msg">data error: {{ dataError }}</p>
     <p v-else class="data-msg">loading route…</p>
@@ -96,6 +103,7 @@ const statusLabel: Record<typeof status.value, string> = {
   margin-top: 0.75rem;
 }
 
+.now-panel { margin-top: 1rem; }
 .route { margin-top: 1rem; }
 
 .data-msg {
