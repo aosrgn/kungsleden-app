@@ -1,18 +1,15 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, useTemplateRef } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch, useTemplateRef } from 'vue'
 import maplibregl, { type Map as MLMap, Marker } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { useGeolocation } from '../composables/useGeolocation'
+
+const { status, coords, lastError, permState, isStandalone, locateFix, locate } = useGeolocation()
 
 const mapEl = useTemplateRef<HTMLDivElement>('mapEl')
-const status = ref<'idle' | 'locating' | 'located' | 'denied' | 'unavailable' | 'error'>('idle')
-const coords = ref<{ lat: number; lng: number; acc: number } | null>(null)
-const lastError = ref<string>('')
-const permState = ref<string>('unknown')
-const isStandalone = ref<boolean>(false)
 
 let map: MLMap | null = null
 let userMarker: Marker | null = null
-let watchId: number | null = null
 
 const KUNGSLEDEN_MID: [number, number] = [17.5, 67.5]
 
@@ -96,51 +93,21 @@ function makeMarkerEl(): HTMLDivElement {
   return el
 }
 
-function onPosition(pos: GeolocationPosition, recenter: boolean) {
-  if (!map) return
-  const { latitude, longitude, accuracy } = pos.coords
-  coords.value = { lat: latitude, lng: longitude, acc: accuracy }
-  status.value = 'located'
-  lastError.value = ''
-
-  const lngLat: [number, number] = [longitude, latitude]
+watch(coords, (c) => {
+  if (!map || !c) return
+  const lngLat: [number, number] = [c.lng, c.lat]
   if (!userMarker) {
     userMarker = new maplibregl.Marker({ element: makeMarkerEl() }).setLngLat(lngLat).addTo(map)
   } else {
     userMarker.setLngLat(lngLat)
   }
-  if (recenter) map.flyTo({ center: lngLat, zoom: 13, duration: 800 })
-}
+})
 
-function onError(err: GeolocationPositionError) {
-  lastError.value = `code=${err.code} msg="${err.message}"`
-  status.value = err.code === 1 ? 'denied' : err.code === 2 ? 'unavailable' : 'error'
-}
-
-type Strategy = 'minimal' | 'low-acc' | 'delayed'
-
-function startWatch() {
-  if (watchId !== null) navigator.geolocation.clearWatch(watchId)
-  watchId = navigator.geolocation.watchPosition(
-    (p) => onPosition(p, false),
-    (err) => onError(err),
-    { enableHighAccuracy: true, maximumAge: 5000 },
-  )
-}
-
-function tryGet(strategy: Strategy): Promise<GeolocationPosition> {
-  return new Promise((resolve, reject) => {
-    const success = (p: GeolocationPosition) => resolve(p)
-    const fail = (e: GeolocationPositionError) => reject(e)
-    if (strategy === 'minimal') {
-      navigator.geolocation.getCurrentPosition(success, fail)
-    } else if (strategy === 'low-acc') {
-      navigator.geolocation.getCurrentPosition(success, fail, { enableHighAccuracy: false })
-    } else {
-      setTimeout(() => navigator.geolocation.getCurrentPosition(success, fail), 0)
-    }
-  })
-}
+// Recenter on every explicit locate/retry, not on routine watch ticks.
+watch(locateFix, () => {
+  if (!map || !coords.value) return
+  map.flyTo({ center: [coords.value.lng, coords.value.lat], zoom: 13, duration: 800 })
+})
 
 function switchBasemap() {
   if (!map) return
@@ -161,51 +128,8 @@ function toggleTrails() {
   }
 }
 
-async function locate() {
-  if (!('geolocation' in navigator)) {
-    status.value = 'unavailable'
-    lastError.value = 'navigator.geolocation undefined'
-    return
-  }
-  status.value = 'locating'
-  lastError.value = ''
-
-  const strategies: Strategy[] = ['minimal', 'low-acc', 'delayed']
-  for (const s of strategies) {
-    try {
-      const pos = await tryGet(s)
-      lastError.value = `ok via ${s}`
-      onPosition(pos, true)
-      startWatch()
-      return
-    } catch (e) {
-      const err = e as GeolocationPositionError
-      lastError.value = `${s}: code=${err.code} "${err.message}"`
-      if (err.code !== 1) break
-    }
-  }
-  status.value = lastError.value.includes('code=1') ? 'denied' : 'error'
-}
-
-async function refreshPermState() {
-  if (!('permissions' in navigator)) {
-    permState.value = 'permissions API unavailable'
-    return
-  }
-  try {
-    const p = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
-    permState.value = p.state
-    p.onchange = () => { permState.value = p.state }
-  } catch (e) {
-    permState.value = `query failed: ${(e as Error).message}`
-  }
-}
-
 onMounted(() => {
   if (!mapEl.value) return
-  isStandalone.value = window.matchMedia('(display-mode: standalone)').matches
-    || (navigator as unknown as { standalone?: boolean }).standalone === true
-  refreshPermState()
 
   map = new maplibregl.Map({
     container: mapEl.value,
@@ -224,7 +148,6 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  if (watchId !== null) navigator.geolocation.clearWatch(watchId)
   userMarker?.remove()
   map?.remove()
   map = null
