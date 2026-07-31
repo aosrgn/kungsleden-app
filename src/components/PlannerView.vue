@@ -54,7 +54,7 @@ const statusLabel: Record<typeof status.value, string> = {
       </button>
     </div>
 
-    <RouteStrip v-if="trip" :rows="trip.diary" class="route" />
+    <RouteStrip v-if="trip" :rows="trip.diary" :position-km="position?.km ?? null" class="route" />
     <p v-else-if="dataError" class="data-msg">data error: {{ dataError }}</p>
     <p v-else class="data-msg">loading route…</p>
 
