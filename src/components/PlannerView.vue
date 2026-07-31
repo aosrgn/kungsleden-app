@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useGeolocation } from '../composables/useGeolocation'
 import { loadTrip, type Trip } from '../data/trip'
+import RouteStrip from './RouteStrip.vue'
 
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
 
@@ -42,10 +43,11 @@ const statusLabel: Record<typeof status.value, string> = {
       </button>
     </div>
 
+    <RouteStrip v-if="trip" :rows="trip.diary" class="route" />
+    <p v-else-if="dataError" class="data-msg">data error: {{ dataError }}</p>
+    <p v-else class="data-msg">loading route…</p>
+
     <div class="diag">
-      <div v-if="trip">data: {{ trip.diary.length }} diary rows · trail {{ trip.trail.length }} pts</div>
-      <div v-else-if="dataError">data error: {{ dataError }}</div>
-      <div v-else>data: loading…</div>
       <div>standalone: {{ isStandalone ? 'yes' : 'no' }}</div>
       <div>permission: {{ permState }}</div>
       <div v-if="lastError">err: {{ lastError }}</div>
@@ -81,6 +83,14 @@ const statusLabel: Record<typeof status.value, string> = {
   gap: 0.4rem;
   flex-wrap: wrap;
   margin-top: 0.75rem;
+}
+
+.route { margin-top: 1rem; }
+
+.data-msg {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  opacity: 0.7;
 }
 
 .diag {
