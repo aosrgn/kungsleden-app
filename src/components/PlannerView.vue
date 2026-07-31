@@ -1,7 +1,19 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { useGeolocation } from '../composables/useGeolocation'
+import { loadTrip, type Trip } from '../data/trip'
 
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
+
+const trip = ref<Trip | null>(null)
+const dataError = ref<string>('')
+onMounted(async () => {
+  try {
+    trip.value = await loadTrip()
+  } catch (e) {
+    dataError.value = (e as Error).message
+  }
+})
 
 const statusLabel: Record<typeof status.value, string> = {
   idle: '',
@@ -31,6 +43,9 @@ const statusLabel: Record<typeof status.value, string> = {
     </div>
 
     <div class="diag">
+      <div v-if="trip">data: {{ trip.diary.length }} diary rows · trail {{ trip.trail.length }} pts</div>
+      <div v-else-if="dataError">data error: {{ dataError }}</div>
+      <div v-else>data: loading…</div>
       <div>standalone: {{ isStandalone ? 'yes' : 'no' }}</div>
       <div>permission: {{ permState }}</div>
       <div v-if="lastError">err: {{ lastError }}</div>
