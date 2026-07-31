@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useGeolocation } from '../composables/useGeolocation'
 import { loadTrip, type Trip } from '../data/trip'
+import { createTrailIndex } from '../trail'
 import RouteStrip from './RouteStrip.vue'
 
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
@@ -15,6 +16,13 @@ onMounted(async () => {
     dataError.value = (e as Error).message
   }
 })
+
+const trailIndex = computed(() => (trip.value ? createTrailIndex(trip.value.trail) : null))
+const position = computed(() =>
+  trailIndex.value && coords.value
+    ? trailIndex.value.project(coords.value.lat, coords.value.lng)
+    : null,
+)
 
 const statusLabel: Record<typeof status.value, string> = {
   idle: '',
@@ -35,6 +43,9 @@ const statusLabel: Record<typeof status.value, string> = {
 
     <p v-if="coords" class="coords">
       {{ coords.lat.toFixed(5) }}, {{ coords.lng.toFixed(5) }} · ±{{ Math.round(coords.acc) }}m
+      <template v-if="position">
+        · km {{ position.km.toFixed(1) }} · {{ Math.round(position.offsetKm * 1000) }}m off-trail
+      </template>
     </p>
 
     <div class="actions">
