@@ -5,7 +5,13 @@ import type { DiaryRow } from '../data/trip'
 const props = defineProps<{
   rows: DiaryRow[]
   positionKm?: number | null
+  now?: Date | null
+  paceKmh?: number | null
 }>()
+
+// Clock-time ETA is only meaningful for nodes reachable within a long day's walk;
+// beyond that a bare "HH:MM" would span days and mislead, so it's omitted.
+const ETA_MAX_HOURS = 14
 
 // Every located diary feature, ordered along the route.
 const nodes = computed(() =>
@@ -45,6 +51,17 @@ function deltaLabel(node: DiaryRow): string {
 function isPassed(node: DiaryRow): boolean {
   return props.positionKm != null && (node.fromStart as number) < props.positionKm
 }
+// Clock-time you'd reach a node ahead, at the current pace; null if not computable
+// or too far ahead to render as a same-ish-day time.
+function etaLabel(node: DiaryRow): string | null {
+  if (props.positionKm == null || props.now == null || !props.paceKmh) return null
+  const kmAhead = delta(node)
+  if (kmAhead <= 0) return null
+  const hours = kmAhead / props.paceKmh
+  if (hours > ETA_MAX_HOURS) return null
+  const at = new Date(props.now.valueOf() + hours * 3600000)
+  return at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+}
 
 // On the first fix, bring the here-marker into view; later fixes just shift the
 // marker between nodes as you walk, without yanking the scroll position.
@@ -74,7 +91,10 @@ watch(
         </span>
         <span class="rail"><span class="dot" /></span>
         <span class="label">
-          <span class="name">{{ item.node.icon }} {{ item.node.name }}</span>
+          <span class="name">
+            {{ item.node.icon }} {{ item.node.name }}
+            <span v-if="etaLabel(item.node)" class="eta">~{{ etaLabel(item.node) }}</span>
+          </span>
           <span v-if="item.node.notes" class="note">{{ item.node.notes }}</span>
         </span>
       </li>
@@ -146,6 +166,13 @@ watch(
   padding-bottom: 0.6rem;
 }
 .name { font-size: 0.9rem; }
+.eta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  opacity: 0.6;
+  margin-left: 0.35rem;
+  white-space: nowrap;
+}
 .note {
   font-size: 0.72rem;
   opacity: 0.6;

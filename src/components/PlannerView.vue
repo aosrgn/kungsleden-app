@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useGeolocation } from '../composables/useGeolocation'
+import { useNow } from '../composables/useNow'
+import { usePace } from '../composables/usePace'
 import { loadTrip, type Trip } from '../data/trip'
 import { createTrailIndex } from '../trail'
 import NowPanel from './NowPanel.vue'
+import PaceControl from './PaceControl.vue'
 import RouteStrip from './RouteStrip.vue'
 
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
+const now = useNow()
+const { paceKmh, hoursPerDay } = usePace()
 
 const trip = ref<Trip | null>(null)
 const dataError = ref<string>('')
@@ -59,9 +64,18 @@ const statusLabel: Record<typeof status.value, string> = {
       :total-km="trailIndex?.totalKm ?? 0"
       :lat="coords?.lat ?? null"
       :lng="coords?.lng ?? null"
+      :now="now"
       class="now-panel"
     />
-    <RouteStrip v-if="trip" :rows="trip.diary" :position-km="position?.km ?? null" class="route" />
+    <PaceControl v-if="trip" v-model:pace-kmh="paceKmh" v-model:hours-per-day="hoursPerDay" class="pace-control" />
+    <RouteStrip
+      v-if="trip"
+      :rows="trip.diary"
+      :position-km="position?.km ?? null"
+      :now="now"
+      :pace-kmh="paceKmh"
+      class="route"
+    />
     <p v-else-if="dataError" class="data-msg">data error: {{ dataError }}</p>
     <p v-else class="data-msg">loading route…</p>
 
@@ -104,6 +118,7 @@ const statusLabel: Record<typeof status.value, string> = {
 }
 
 .now-panel { margin-top: 1rem; }
+.pace-control { margin-top: 0.6rem; }
 .route { margin-top: 1rem; }
 
 .data-msg {

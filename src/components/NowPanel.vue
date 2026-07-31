@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed } from 'vue'
 import { daylight } from '../daylight'
 
 const props = defineProps<{
@@ -7,6 +7,7 @@ const props = defineProps<{
   totalKm: number
   lat: number | null
   lng: number | null
+  now: Date
 }>()
 
 // Route sections (km ranges from the diary plan, data/src/build-diary-md.ts).
@@ -25,14 +26,8 @@ const kmToGo = computed(() =>
   props.positionKm == null ? null : Math.max(0, props.totalKm - props.positionKm),
 )
 
-// Tick every minute so "daylight left" stays live while stationary.
-const now = ref(new Date())
-let timer: ReturnType<typeof setInterval> | undefined
-onMounted(() => { timer = setInterval(() => (now.value = new Date()), 60000) })
-onBeforeUnmount(() => clearInterval(timer))
-
 const light = computed(() =>
-  props.lat == null || props.lng == null ? null : daylight(props.lat, props.lng, now.value),
+  props.lat == null || props.lng == null ? null : daylight(props.lat, props.lng, props.now),
 )
 
 const hhmm = (date: Date) =>
