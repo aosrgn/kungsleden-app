@@ -7,8 +7,14 @@ export default defineConfig({
   plugins: [
     vue(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt': a new build is downloaded but HELD until the user taps Update,
+      // so the field data never changes underfoot without an explicit action.
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'logo.svg'],
+      workbox: {
+        // precache the bundled trip data too, so the route works fully offline
+        globPatterns: ['**/*.{js,wasm,css,html,ico,png,svg,webmanifest,csv,geojson}'],
+      },
       manifest: {
         id: '/',
         name: 'Kungsleden Planning',

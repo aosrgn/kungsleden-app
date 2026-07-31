@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import PlannerView from './components/PlannerView.vue'
+import UpdatePrompt from './components/UpdatePrompt.vue'
 const sha = __COMMIT_SHA__
 const buildTime = __BUILD_TIME__
 </script>
 
 <template>
   <PlannerView />
+  <UpdatePrompt />
   <div class="build-badge">
     <code>{{ sha }}</code> · <code>{{ buildTime }}</code>
   </div>
