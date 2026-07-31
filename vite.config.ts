@@ -32,13 +32,4 @@ export default defineConfig({
     __COMMIT_SHA__: JSON.stringify(process.env.VITE_COMMIT_SHA ?? 'dev'),
     __BUILD_TIME__: JSON.stringify(process.env.VITE_BUILD_TIME ?? new Date().toISOString()),
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          maplibre: ['maplibre-gl'],
-        },
-      },
-    },
-  },
 })

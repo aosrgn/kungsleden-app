@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import MapView from './components/MapView.vue'
+import PlannerView from './components/PlannerView.vue'
 const sha = __COMMIT_SHA__
 const buildTime = __BUILD_TIME__
 </script>
 
 <template>
-  <MapView />
+  <PlannerView />
   <div class="build-badge">
     <code>{{ sha }}</code> · <code>{{ buildTime }}</code>
   </div>

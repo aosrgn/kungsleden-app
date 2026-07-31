@@ -32,9 +32,6 @@ jobs:
       - run: npm ci
 
       - name: Build
-        env:
-          VITE_LM_USER: ${{ secrets.LM_USER }}
-          VITE_LM_PASS: ${{ secrets.LM_PASS }}
         run: |
           export VITE_COMMIT_SHA="${GITHUB_SHA::7}"
           export VITE_BUILD_TIME="$(date -u +'%Y-%m-%d %H:%M UTC')"
