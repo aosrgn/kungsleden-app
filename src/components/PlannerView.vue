@@ -63,12 +63,20 @@ const realPositionKm = computed(() => (onTrail.value ? position.value!.km : null
 
 // Test/preview override: type a km to exercise the planner off-trail (before the trek).
 // null = off (use the real GPS-derived km). Every panel + the strip reads this.
+// The input binds to its OWN string ref (v-model) so frequent re-renders (GPS/clock)
+// don't wipe what's being typed; it's committed to simKm on change.
 const simKm = ref<number | null>(null)
+const simKmInput = ref<string>('')
 const positionKm = computed(() => (simKm.value != null ? simKm.value : realPositionKm.value))
-function onSimKm(e: Event) {
-  const v = parseFloat((e.target as HTMLInputElement).value)
+function commitSim() {
+  const v = parseFloat(simKmInput.value)
   const total = trailIndex.value?.totalKm ?? 460
   simKm.value = Number.isFinite(v) ? Math.min(total, Math.max(0, v)) : null
+  simKmInput.value = simKm.value == null ? '' : String(simKm.value)
+}
+function clearSim() {
+  simKm.value = null
+  simKmInput.value = ''
 }
 
 const statusLabel: Record<typeof status.value, string> = {
@@ -162,9 +170,9 @@ const statusLabel: Record<typeof status.value, string> = {
     <div class="diag">
       <div class="sim-row">
         <label>simulate km:
-          <input type="number" step="1" min="0" :value="simKm ?? ''" placeholder="off" @change="onSimKm" />
+          <input v-model="simKmInput" type="number" step="1" min="0" placeholder="off" @change="commitSim" />
         </label>
-        <button v-if="simKm != null" @click="simKm = null">clear</button>
+        <button v-if="simKm != null" @click="clearSim">clear</button>
       </div>
       <div>standalone: {{ isStandalone ? 'yes' : 'no' }}</div>
       <div>permission: {{ permState }}</div>
