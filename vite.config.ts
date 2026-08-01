@@ -22,7 +22,9 @@ export default defineConfig({
         description: 'Hemavan → Abisko thru-hike planner',
         theme_color: '#0a3d2e',
         background_color: '#f4f1ea',
-        display: 'standalone',
+        // 'browser' (not 'standalone'): iOS 18 breaks geolocation in standalone PWAs
+        // (always code=1). Browser mode keeps Safari's chrome but restores location.
+        display: 'browser',
         start_url: '/',
         scope: '/',
         icons: [
