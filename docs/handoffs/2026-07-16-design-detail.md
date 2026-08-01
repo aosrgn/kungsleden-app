@@ -1,5 +1,8 @@
 # 2026-07-16 · Design Detail & v2 Recovery Notes
 
+> **SUPERSEDED — historical only.** The storage/PMTiles/pace-model sections below no longer
+> describe the app. Read `2026-08-01-app-built-handoff.md` for the real state.
+
 Companion to `2026-07-16-thread-consolidation.md`. That doc captured *what was decided*. This one captures *why* — the reasoning behind non-obvious choices, plus the shelved-for-v2 designs so we don't lose them.
 
 Read this second, only if you're touching something covered here or trying to understand why the current design is the shape it is.

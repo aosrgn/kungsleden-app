@@ -1,5 +1,8 @@
 # 2026-07-16 · Thread Consolidation & V1 Scope Lock
 
+> **SUPERSEDED — historical only.** The map/tiles/PMTiles/IndexedDB direction below was
+> dropped. Read `2026-08-01-app-built-handoff.md` for the real state.
+
 Context: the user had two parallel Claude Code sessions running on this repo (one cloud, one local design/discussion). This handoff merges them, locks the v1 scope, and sets up the local workspace for the final week of pre-trek development.
 
 ## What was in the cloud session (before this handoff)
