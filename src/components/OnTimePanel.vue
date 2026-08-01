@@ -67,14 +67,17 @@ const bufferDays = computed(() => {
 const finishRows = computed(() => {
   if (props.positionKm == null) return []
   const remaining = Math.max(0, props.totalKm - props.positionKm)
-  const paces = [...new Set([...PACE_PRESETS, Math.round(props.paceKmh * 10) / 10])].sort((a, b) => a - b)
+  const current = Math.round(props.paceKmh * 10) / 10
+  const paces = [...new Set([...PACE_PRESETS, current])].sort((a, b) => a - b)
   return paces.map((pace) => {
-    const kmPerDay = pace * props.hoursPerDay
+    const isCurrent = pace === current
+    // Project the "you" row from the exact pace, not the 0.1-rounded display value.
+    const kmPerDay = (isCurrent ? props.paceKmh : pace) * props.hoursPerDay
     const daysLeft = remaining / kmPerDay
     const date = addDays(startOfDay(props.now), Math.max(0, Math.ceil(daysLeft) - 1))
     return {
       pace,
-      isCurrent: pace === Math.round(props.paceKmh * 10) / 10,
+      isCurrent,
       date,
       risky: date.valueOf() > LATEST_SAFE_FINISH.valueOf(),
     }

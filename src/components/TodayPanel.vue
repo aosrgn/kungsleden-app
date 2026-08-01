@@ -32,7 +32,7 @@ const stopEta = computed(() => (today.value ? etaAt(today.value.km) : null))
 const passing = computed(() => {
   const t = today.value
   if (!t || props.positionKm == null) return []
-  return allHuts.value.filter((h) => h.km > props.positionKm! && h.km <= t.km)
+  return allHuts.value.filter((h) => h.km > props.positionKm! && h.km < t.km)
 })
 
 // The first hut beyond the stop, shown only if reachable within the push window.

@@ -19,7 +19,7 @@ const { paceKmh, hoursPerDay } = usePace()
 const { marks, mark, undo } = useDayLog()
 
 function markDayStart() {
-  if (position.value) mark(position.value.km, now.value.valueOf())
+  if (positionKm.value != null) mark(positionKm.value, now.value.valueOf())
 }
 
 const trip = ref<Trip | null>(null)
@@ -38,6 +38,11 @@ const position = computed(() =>
     ? trailIndex.value.project(coords.value.lat, coords.value.lng)
     : null,
 )
+// A fix far from the trail line (e.g. testing at home) shouldn't drive the planner or
+// pollute the day log — only treat the position as on-route within this offset.
+const OFF_TRAIL_KM = 2
+const onTrail = computed(() => position.value != null && position.value.offsetKm <= OFF_TRAIL_KM)
+const positionKm = computed(() => (onTrail.value ? position.value!.km : null))
 
 const statusLabel: Record<typeof status.value, string> = {
   idle: '',
@@ -58,7 +63,8 @@ const statusLabel: Record<typeof status.value, string> = {
 
     <p v-if="coords" class="coords">
       {{ coords.lat.toFixed(5) }}, {{ coords.lng.toFixed(5) }} · ±{{ Math.round(coords.acc) }}m
-      <template v-if="position"> · {{ Math.round(position.offsetKm * 1000) }}m off-trail</template>
+      <template v-if="position && onTrail"> · {{ Math.round(position.offsetKm * 1000) }}m off-trail</template>
+      <template v-else-if="position"> · off route ({{ position.offsetKm.toFixed(0) }} km) — planner paused</template>
     </p>
 
     <div class="actions">
@@ -69,7 +75,7 @@ const statusLabel: Record<typeof status.value, string> = {
 
     <NowPanel
       v-if="trip"
-      :position-km="position?.km ?? null"
+      :position-km="positionKm"
       :total-km="trailIndex?.totalKm ?? 0"
       :lat="coords?.lat ?? null"
       :lng="coords?.lng ?? null"
@@ -79,7 +85,7 @@ const statusLabel: Record<typeof status.value, string> = {
     <TodayPanel
       v-if="trip"
       :diary="trip.diary"
-      :position-km="position?.km ?? null"
+      :position-km="positionKm"
       :now="now"
       :pace-kmh="paceKmh"
       class="today-panel"
@@ -87,7 +93,7 @@ const statusLabel: Record<typeof status.value, string> = {
     <OnTimePanel
       v-if="trip"
       :diary="trip.diary"
-      :position-km="position?.km ?? null"
+      :position-km="positionKm"
       :total-km="trailIndex?.totalKm ?? 0"
       :now="now"
       :pace-kmh="paceKmh"
@@ -97,7 +103,7 @@ const statusLabel: Record<typeof status.value, string> = {
     <DayLogPanel
       v-if="trip"
       :marks="marks"
-      :position-km="position?.km ?? null"
+      :position-km="positionKm"
       class="daylog-panel"
       @mark="markDayStart"
       @undo="undo"
@@ -106,9 +112,10 @@ const statusLabel: Record<typeof status.value, string> = {
     <RouteStrip
       v-if="trip"
       :rows="trip.diary"
-      :position-km="position?.km ?? null"
+      :position-km="positionKm"
       :now="now"
       :pace-kmh="paceKmh"
+      :total-km="trailIndex?.totalKm ?? null"
       class="route"
     />
     <p v-else-if="dataError" class="data-msg">data error: {{ dataError }}</p>

@@ -11,10 +11,16 @@ function clamp(raw: string, min: number, max: number, fallback: number): number 
   return Number.isNaN(n) ? fallback : Math.min(max, Math.max(min, n))
 }
 function onPace(e: Event) {
-  paceKmh.value = clamp((e.target as HTMLInputElement).value, 1, 8, paceKmh.value)
+  const el = e.target as HTMLInputElement
+  const v = clamp(el.value, 1, 8, paceKmh.value)
+  paceKmh.value = v
+  el.value = String(v) // re-sync even when the clamped value equals the current model
 }
 function onHours(e: Event) {
-  hoursPerDay.value = clamp((e.target as HTMLInputElement).value, 1, 16, hoursPerDay.value)
+  const el = e.target as HTMLInputElement
+  const v = clamp(el.value, 1, 16, hoursPerDay.value)
+  hoursPerDay.value = v
+  el.value = String(v)
 }
 </script>
 

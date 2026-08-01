@@ -7,6 +7,7 @@ const props = defineProps<{
   positionKm?: number | null
   now?: Date | null
   paceKmh?: number | null
+  totalKm?: number | null
 }>()
 
 // Clock-time ETA is only meaningful for nodes reachable within a long day's walk;
@@ -55,6 +56,8 @@ function isPassed(node: DiaryRow): boolean {
 // or too far ahead to render as a same-ish-day time.
 function etaLabel(node: DiaryRow): string | null {
   if (props.positionKm == null || props.now == null || !props.paceKmh) return null
+  // Post-hike transport rows sit beyond the trail end — you don't walk to them.
+  if (props.totalKm != null && (node.fromStart as number) > props.totalKm) return null
   const kmAhead = delta(node)
   if (kmAhead <= 0) return null
   const hours = kmAhead / props.paceKmh
