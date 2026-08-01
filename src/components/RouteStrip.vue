@@ -6,7 +6,7 @@ const props = defineProps<{
   rows: DiaryRow[]
   positionKm?: number | null
   now?: Date | null
-  paceKmh?: number | null
+  speedKmh?: number | null
   totalKm?: number | null
 }>()
 
@@ -55,12 +55,12 @@ function isPassed(node: DiaryRow): boolean {
 // Clock-time you'd reach a node ahead, at the current pace; null if not computable
 // or too far ahead to render as a same-ish-day time.
 function etaLabel(node: DiaryRow): string | null {
-  if (props.positionKm == null || props.now == null || !props.paceKmh) return null
+  if (props.positionKm == null || props.now == null || !props.speedKmh) return null
   // Post-hike transport rows sit beyond the trail end — you don't walk to them.
   if (props.totalKm != null && (node.fromStart as number) > props.totalKm) return null
   const kmAhead = delta(node)
   if (kmAhead <= 0) return null
-  const hours = kmAhead / props.paceKmh
+  const hours = kmAhead / props.speedKmh
   if (hours > ETA_MAX_HOURS) return null
   const at = new Date(props.now.valueOf() + hours * 3600000)
   return at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })

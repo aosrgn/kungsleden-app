@@ -7,7 +7,7 @@ const props = defineProps<{
   diary: DiaryRow[]
   positionKm: number | null
   now: Date
-  paceKmh: number
+  speedKmh: number
 }>()
 
 const PUSH_WINDOW_MS = 2 * 3600 * 1000 // how far past the planned stop a next hut may be
@@ -19,7 +19,7 @@ const today = computed(() => stopForDay(stops.value, props.now))
 
 function etaAt(km: number): Date | null {
   if (props.positionKm == null || km <= props.positionKm) return null
-  const hours = (km - props.positionKm) / props.paceKmh
+  const hours = (km - props.positionKm) / props.speedKmh
   return new Date(props.now.valueOf() + hours * 3600000)
 }
 

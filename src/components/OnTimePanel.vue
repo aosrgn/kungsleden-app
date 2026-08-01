@@ -2,37 +2,39 @@
 import { computed } from 'vue'
 import type { DiaryRow } from '../data/trip'
 import { planStops, plannedKmAtTime, startOfDay, addDays } from '../plan'
-import { PACE_PRESETS } from '../composables/usePace'
 
 const props = defineProps<{
   diary: DiaryRow[]
   positionKm: number | null
   totalKm: number
   now: Date
-  paceKmh: number
-  hoursPerDay: number
+  avgKmDay: number
+  madeGoodKmh: number
 }>()
 
 // Must be in Abisko by ~midday Aug 21 for the KRN→ARN flight (Fri Aug 21 21:05),
 // allowing for the Abisko→airport transfer. One deadline drives both buffer and the
-// per-pace flag so they can't disagree.
+// finish flag so they can't disagree.
 const DEADLINE = new Date(2026, 7, 21, 12)
-// Day-granular projected finishes on/after Aug 21 are flagged: too tight for the
-// midday-arrival transfer even though the flight itself is that evening.
+// A projected finish on/after Aug 21 is flagged: too tight for the midday-arrival
+// transfer even though the flight itself is that evening.
 const LATEST_SAFE_FINISH = addDays(startOfDay(DEADLINE), -1)
 const DAY_MS = 86400000
 
 const stops = computed(() => planStops(props.diary))
 const finished = computed(() => props.positionKm != null && props.positionKm >= props.totalKm)
 
-// Projected Abisko finish date at a given pace + the chosen hours/day, from your current
-// position. Day-granular (assumes a full walking day available regardless of the hour).
-function projectFinish(pace: number): Date | null {
-  if (props.positionKm == null) return null
+// Projected Abisko finish from your measured average km/day. Day-granular (assumes a
+// full walking day available regardless of the hour it's checked).
+const projectedFinish = computed(() => {
+  if (props.positionKm == null || props.avgKmDay <= 0) return null
   const remaining = Math.max(0, props.totalKm - props.positionKm)
-  const daysLeft = remaining / (pace * props.hoursPerDay)
+  const daysLeft = remaining / props.avgKmDay
   return addDays(startOfDay(props.now), Math.max(0, Math.ceil(daysLeft) - 1))
-}
+})
+const risky = computed(
+  () => projectedFinish.value != null && projectedFinish.value.valueOf() > LATEST_SAFE_FINISH.valueOf(),
+)
 
 // + = ahead of Plan A: how many km past where the plan expects you right now (which
 // ramps only during the day's walking window, so being at camp in the morning reads 0).
@@ -42,12 +44,12 @@ const kmDelta = computed(() => {
   return planned == null ? null : props.positionKm - planned
 })
 
-// Express the km gap as walking time at the current pace — a concrete "you're N hours
-// ahead/behind" rather than an abstract ratio.
+// Express the km gap as walking time at your made-good speed — a concrete "you're N
+// hours ahead/behind" rather than an abstract ratio.
 const scheduleText = computed(() => {
   const km = kmDelta.value
-  if (km == null) return null
-  const hours = Math.abs(km) / props.paceKmh
+  if (km == null || props.madeGoodKmh <= 0) return null
+  const hours = Math.abs(km) / props.madeGoodKmh
   if (hours < 0.5) return 'on schedule'
   const dir = km > 0 ? 'ahead' : 'behind'
   if (hours < 10) return `${hours.toFixed(1)} h ${dir}`
@@ -56,28 +58,14 @@ const scheduleText = computed(() => {
 })
 const scheduleDir = computed(() => {
   const km = kmDelta.value
-  if (km == null || Math.abs(km) / props.paceKmh < 0.5) return 'even'
+  if (km == null || props.madeGoodKmh <= 0 || Math.abs(km) / props.madeGoodKmh < 0.5) return 'even'
   return km > 0 ? 'ahead' : 'behind'
 })
 
-// Spare days between your projected finish (at YOUR pace × hours/day) and the flight
-// deadline — so it responds to the pace selector. Stable within a day.
+// Spare days between your projected finish and the flight deadline.
 const bufferDays = computed(() => {
-  const finish = projectFinish(props.paceKmh)
+  const finish = projectedFinish.value
   return finish == null ? null : Math.round(((DEADLINE.valueOf() - finish.valueOf()) / DAY_MS) * 10) / 10
-})
-
-// Projected Abisko finish date for each pace, at the chosen hours/day.
-const finishRows = computed(() => {
-  if (props.positionKm == null) return []
-  const current = Math.round(props.paceKmh * 10) / 10
-  const paces = [...new Set([...PACE_PRESETS.map((p) => p.kmh), current])].sort((a, b) => a - b)
-  return paces.map((pace) => {
-    const isCurrent = pace === current
-    // "you" row projects from the exact pace, not the 0.1-rounded display value.
-    const date = projectFinish(isCurrent ? props.paceKmh : pace) as Date // positionKm != null here
-    return { pace, isCurrent, date, risky: date.valueOf() > LATEST_SAFE_FINISH.valueOf() }
-  })
 })
 
 const dayLabel = (d: Date) => d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
@@ -106,15 +94,11 @@ const dayLabel = (d: Date) => d.toLocaleDateString([], { weekday: 'short', month
         <span class="label">Buffer</span>
         <span class="value" :class="{ behind: bufferDays < 1 }">{{ bufferDays }} days left</span>
       </div>
-
-      <div class="finish">
+      <div v-if="projectedFinish" class="stat">
         <span class="label">Finish</span>
-        <ul class="paces">
-          <li v-for="r in finishRows" :key="r.pace" :class="{ current: r.isCurrent, risky: r.risky }">
-            <span class="pace">{{ r.pace.toFixed(1) }} km/h<span v-if="r.isCurrent"> ·you</span></span>
-            <span class="date">{{ dayLabel(r.date) }}<span v-if="r.risky"> · risks flight</span></span>
-          </li>
-        </ul>
+        <span class="value" :class="{ behind: risky }">
+          {{ dayLabel(projectedFinish) }}<span v-if="risky"> · risks flight</span>
+        </span>
       </div>
     </template>
   </section>
@@ -151,27 +135,5 @@ const dayLabel = (d: Date) => d.toLocaleDateString([], { weekday: 'short', month
 .value.ahead { color: #0a7d5a; font-weight: 600; }
 .value.behind { color: #c2410c; font-weight: 600; }
 .muted { opacity: 0.6; font-size: 0.85rem; }
-
-.finish {
-  display: flex;
-  gap: 0.6rem;
-}
-.paces {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  font-size: 0.85rem;
-}
-.paces li {
-  display: flex;
-  gap: 0.6rem;
-  justify-content: space-between;
-}
-.paces .pace { opacity: 0.7; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-.paces li.current { font-weight: 650; }
-.paces li.current .pace { opacity: 1; }
-.paces li.risky .date { color: #c2410c; }
+.line { margin: 0; font-size: 0.9rem; }
 </style>

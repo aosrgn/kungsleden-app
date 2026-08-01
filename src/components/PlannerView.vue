@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useGeolocation } from '../composables/useGeolocation'
 import { useNow } from '../composables/useNow'
-import { usePace } from '../composables/usePace'
+import { useSpeed } from '../composables/useSpeed'
 import { useDayLog } from '../composables/useDayLog'
 import { loadTrip, type Trip } from '../data/trip'
 import { createTrailIndex } from '../trail'
@@ -10,17 +10,32 @@ import NowPanel from './NowPanel.vue'
 import TodayPanel from './TodayPanel.vue'
 import OnTimePanel from './OnTimePanel.vue'
 import DayLogPanel from './DayLogPanel.vue'
-import PaceControl from './PaceControl.vue'
+import SpeedControl from './SpeedControl.vue'
 import RouteStrip from './RouteStrip.vue'
 
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
 const now = useNow()
-const { paceKmh, hoursPerDay } = usePace()
+const { startHour, endHour, seedKmDay } = useSpeed()
 const { marks, mark, undo } = useDayLog()
 
 function markDayStart() {
   if (positionKm.value != null) mark(positionKm.value, now.value.valueOf())
 }
+
+// Measured average daily distance: the seed as one "day -1" prior plus every completed
+// day from the log (mark to mark), so real days progressively outweigh the seed.
+const avgKmDay = computed(() => {
+  const ms = marks.value
+  let sum = 0
+  let days = 0
+  for (let i = 1; i < ms.length; i++) {
+    sum += Math.max(0, ms[i].km - ms[i - 1].km)
+    days++
+  }
+  return (seedKmDay.value + sum) / (1 + days)
+})
+// Made-good speed (breaks included) = average distance spread over the daily window.
+const madeGoodKmh = computed(() => avgKmDay.value / Math.max(1, endHour.value - startHour.value))
 
 const trip = ref<Trip | null>(null)
 const dataError = ref<string>('')
@@ -87,7 +102,7 @@ const statusLabel: Record<typeof status.value, string> = {
       :diary="trip.diary"
       :position-km="positionKm"
       :now="now"
-      :pace-kmh="paceKmh"
+      :speed-kmh="madeGoodKmh"
       class="today-panel"
     />
     <OnTimePanel
@@ -96,8 +111,8 @@ const statusLabel: Record<typeof status.value, string> = {
       :position-km="positionKm"
       :total-km="trailIndex?.totalKm ?? 0"
       :now="now"
-      :pace-kmh="paceKmh"
-      :hours-per-day="hoursPerDay"
+      :avg-km-day="avgKmDay"
+      :made-good-kmh="madeGoodKmh"
       class="ontime-panel"
     />
     <DayLogPanel
@@ -108,13 +123,21 @@ const statusLabel: Record<typeof status.value, string> = {
       @mark="markDayStart"
       @undo="undo"
     />
-    <PaceControl v-if="trip" v-model:pace-kmh="paceKmh" v-model:hours-per-day="hoursPerDay" class="pace-control" />
+    <SpeedControl
+      v-if="trip"
+      v-model:start-hour="startHour"
+      v-model:end-hour="endHour"
+      v-model:seed-km-day="seedKmDay"
+      :avg-km-day="avgKmDay"
+      :made-good-kmh="madeGoodKmh"
+      class="speed-control"
+    />
     <RouteStrip
       v-if="trip"
       :rows="trip.diary"
       :position-km="positionKm"
       :now="now"
-      :pace-kmh="paceKmh"
+      :speed-kmh="madeGoodKmh"
       :total-km="trailIndex?.totalKm ?? null"
       class="route"
     />
@@ -163,7 +186,7 @@ const statusLabel: Record<typeof status.value, string> = {
 .today-panel { margin-top: 0.6rem; }
 .ontime-panel { margin-top: 0.6rem; }
 .daylog-panel { margin-top: 0.6rem; }
-.pace-control { margin-top: 0.6rem; }
+.speed-control { margin-top: 0.6rem; }
 .route { margin-top: 1rem; }
 
 .data-msg {
