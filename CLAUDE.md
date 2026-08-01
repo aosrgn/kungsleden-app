@@ -52,16 +52,20 @@ runtime file upload / IndexedDB / persistence / verification badge. Data is bake
 `public/data/kungsleden.geojson` (trail LineString + POI points) ship with the app and
 are precached for offline use. `src/data/trip.ts` loads + parses them (`loadTrip()`).
 
-These two files are the **single authoritative copies**. The sibling `../data/` toolset
-(see below) regenerates them **in place** at `../app/public/data/` — its scripts point
-there via `data/src/paths.ts`. There is no second copy to keep in sync.
+These two files are the **single authoritative copies**. The diary/GPX generators are
+vendored in **`tools/`** and wired to npm scripts (run from the repo root, any Node):
+`npm run diary` (reproject coords→km, rewrite `diary.csv`), `npm run diary:md[:b]`
+(regenerate the readable `tools/diary-A.md`/`diary-B.md`), `npm run gpx` (rebuild the field
+map `tools/kungsleden.gpx` for Garmin/Footpath/Guru — re-import manually). `tools/` is
+excluded from the app typecheck (`include` is `src/**`). Run `npm run diary` after any
+coord/km edit so the km stay consistent with the trail line.
 
 ## Sibling projects (all under `~/Development/kungsleden/`)
-- **`../data/`** — data authority + generators (NOT a git repo; uses **devbox** for node —
-  run scripts as `devbox run -- npm run <x>`, never `devbox run -- tsx …`). Holds
-  `diary-B.csv` (Plan B), the field GPX (`kungsleden.gpx`, emoji labels — consumed by
-  Garmin/Footpath/Guru), `kungsleden-base.gpx`, markdown docs, and the scripts that
-  regenerate this app's `diary.csv` + `kungsleden.geojson`.
+- **`../data/`** — NOT in this repo, local-only, NOT a git repo. Holds only `export.ts`
+  (the Naturkartan guide-97 API pull that regenerates `kungsleden.geojson` +
+  `kungsleden-base.gpx`; network + embedded key, rarely re-run) and the logistics markdown
+  (boat-crossings, food-plan, water-zones, bail-out). Uses **devbox** for Node (`devbox
+  run -- npm run export`, never `devbox run -- tsx …`).
 - **`../power/`** — battery + solar simulation. Independent, not touched by this PWA.
 
 ## Stack

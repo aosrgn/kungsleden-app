@@ -1,0 +1,121 @@
+icon;name;type;date;overnight;from_start;to_next_hut;hiked;not_hiked;total;to_next_food;to_next_sauna;crossed_km;lat;lon;shop_size;buy_here;recharge;wifi;laundry;card;notes;source;url
+🏠;Hemavan;hut;;;0,0;10,4;;;;;;;65,81763;15,09099;village;start: 1D tonight + 2 spare D (trip buffer);yes;yes;yes;yes;shop · restaurant+breakfast · sauna · wifi · resupply · ☎ +46 954 300 27;STF-page;https://www.swedishtouristassociation.com/facilities/stf-hemavan-mountain-station/
+🛒;Shop Hemavan;shop;;;0,0;;;;;0,0;;;65,81763;15,09099;;;;;;;;STF-page;
+🍽️;Restaurant Hemavan;restaurant;;;0,0;;;;;10,4;;;65,81763;15,09099;;;;;;;breakfast / full board;STF-page;https://www.swedishtouristassociation.com/facilities/stf-hemavan-mountain-station/
+♨️;Sauna Hemavan;sauna;;;0,0;;;;;;36,5;;65,81763;15,09099;;;;;;;;STF-page;
+🌙;Camp Day 1;camp;2026-08-02;x;7,0;;7,0;0,0;7,0;;;;65,86481;15,10760;;;;;;;arrival day · ease-in;ESTIMATE;
+🌙;──────────  2026-08-02  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🏠;STF Viterskalet;hut;;;10,4;12,4;;;;;;;65,88531;15,15853;large;1B 1L 1D (Day 2);;;;yes;large shop · self-catering · open 18 Jun–20 Sep;STF-page;https://www.swedishtouristassociation.com/facilities/stf-viterskalet-mountain-cabin/
+🛒;Shop Viterskalet;shop;;;10,4;;;;;26,2;;;65,88531;15,15853;;;;;;;large selection (STF shops guide);STF shops guide;https://www.swedishtouristassociation.com/guides/mountains/shops/
+📍;Norra Sytertoppen;landmark;;;14,4;;;;;;;;65,89262;15,25583;;;;;;;1768 m peak per STA · marker at wind shelter;STA;
+🏠;STF Syter;hut;;;22,8;13,8;;;;;;;65,89275;15,39669;none;;;;;yes;NO shop · self-catering;STF-page;https://www.swedishtouristassociation.com/facilities/stf-syter-mountain-cabin/
+🌙;Camp Day 2;camp;2026-08-03;x;25,0;;18,0;0,0;18,0;;;;65,90058;15,43843;;;;;;;ease-in;ESTIMATE;
+🌙;──────────  2026-08-03  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+♨️;Sauna Tärnasjö;sauna;;;36,5;;;;;;61,1;;65,98843;15,49465;;;;;;;by the lake;STF-page;
+🏠;STF Tärnasjö;hut;;;36,6;13,5;;;;;;;65,98881;15,49730;large;1L 1D (Day 3);;;;yes;large shop · sauna by lake · lake swim/fish;STF-page+STA;https://www.swedishtouristassociation.com/facilities/stf-tarnasjo-mountain-cabin/
+🛒;Shop Tärnasjö;shop;;;36,6;;;;;39,4;;;65,98881;15,49730;;;;;;;large selection (STF shops guide);STF shops guide;https://www.swedishtouristassociation.com/guides/mountains/shops/
+🌙;Camp Day 3;camp;2026-08-04;x;46,0;;21,0;0,0;21,0;;;;65,97494;15,67908;;;;;;;ease-in · past Serve;ESTIMATE;
+🌙;──────────  2026-08-04  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🏠;STF Serve;hut;;;50,1;25,9;;;;;;;65,97234;15,76422;none;;;;;yes;NO shop · self-catering;STF-page;https://www.swedishtouristassociation.com/facilities/stf-serve-mountain-cabin/
+⛵;Tjulträsk boat;boat;;;55,0;;;;;;;14;65,95561;15,85321;;;;;;;Serve→Ammarnäs valley alternative (Plan B) · see boat-crossings;operator;
+🏠;Ammarnäs;hut;;;76,0;21,8;;;;;;;65,96043;16,21190;village;2B 2L 1D — carry to Adolfström (Day 7);yes;yes;yes;yes;Wärdshus · restaurant+breakfast · wifi · road resupply · train/bus <1km · ☎ +46 952 602 00;STF-page;https://www.swedishtouristassociation.com/facilities/stf-ammarnas-wardshus/
+🛒;Shop Ammarnäs;shop;;;76,0;;;;;0,0;;;65,96043;16,21190;;;;;;;buy food/drinks in village;STA;
+🍽️;Restaurant Ammarnäs;restaurant;;;76,0;;;;;63,5;;;65,96043;16,21190;;;;;;;game/fish/veg · breakfast;STF-page;https://www.swedishtouristassociation.com/facilities/stf-ammarnas-wardshus/
+🌙;Camp Day 4;camp;2026-08-05;x;83,0;;23,0;14,0;37,0;;;;66,00456;16,12464;;;;;;;Tjulträsk boat (Plan B) · Ammarnäs resupply · ~14 km ahead of Plan A;ESTIMATE;
+🌙;──────────  2026-08-05  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+♨️;Sauna Rävfallet;sauna;;;97,6;;;;;;91,8;;66,09509;16,11773;;;;;;;wood-fired · 100 m downstream;user/Naturkartan;https://www.naturkartan.se/sv/vasterbottens-lan/ravfallsstugan-vindelfjallen
+🏠;Rävfallsstugan;hut;;;97,8;41,7;;;;;;;66,09542;16,11911;none;;;;;;LOCKED key bookable · 14 beds · sauna · wood stove · solar lamps (no sockets) · 250 kr/night · dogs ok;user/Naturkartan;https://www.naturkartan.se/sv/vasterbottens-lan/ravfallsstugan-vindelfjallen
+🌙;Camp Day 5;camp;2026-08-06;x;108,0;;25,0;0,0;25,0;;;;66,08860;16,29816;;;;;;;;ESTIMATE;
+🌙;──────────  2026-08-06  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🛖;Sjnulttjie shelter;shelter;;;124,2;;;;;;;;66,20998;16,37700;;;;;;;safety cabin · stove · outhouse;STA/Naturkartan;
+🌙;Camp Day 6;camp;2026-08-07;x;134,0;;26,0;0,0;26,0;;;;66,27748;16,45751;;;;;;;;ESTIMATE;
+🌙;──────────  2026-08-07  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🏠;Bäverholmens Wärdshus;hut;;;139,5;7,1;;;;;;;66,28579;16,55389;none;lunch here ~13:00 d6 (reservation — confirm);book;;;yes;on mainline ~8 km S of Adolfström · restaurant · guest house (OSM) · wind shelter ~1 km W · boat to Adolfström · verify beds by phone;operator/OSM;https://www.baverholmswardshus.se/
+🍽️;Restaurant Bäverholmen;restaurant;;;139,5;;;;;7,1;;;66,28579;16,55389;;;;;;;wärdshus · 2026 season from 26 Jun;operator;https://www.baverholmswardshus.se/
+⛵;Bäverholmen boat;boat;;;139,5;;;;;;;7,1;66,28579;16,55389;;;;;;;⏰ pre-book by phone · PLANNED (shortcut rule) · skips the last 7.1 trail-km to Adolfström via lake Yraft (STF says ~8 · boat ~6 km) · Christoffer +46 73 025 20 42 / Mari +46 70 635 92 65 · info@baverholmswardshus.se · solo 350 kr 08–19 / 550 kr after 19 (price undated — confirm) · low water: departs ~1 km downstream · payment method unverified;operator/STF boats guide;https://www.baverholmswardshus.se/battransport/
+🏠;Adolfström;hut;;;146,6;20,6;;;;;;;66,27813;16,65737;village;1B 1D — to Jäckvik (Day 8);yes;;yes;yes;10 cabins self-catering · Handelsbod shop+café (summer 10–18 daily) · boat to Bäverholmen;operator;https://adolfstrom.com/stugor-adolfstrom
+🛒;Shop Adolfström;shop;;;146,6;;;;;0,0;;;66,27813;16,65737;;;;;;;Handelsbod 10–18 daily · staples/frozen/dairy/freeze-dried/bread/gear/maps;operator;https://adolfstrom.com/handelsboden-i-adolfstrom
+🍽️;Café Adolfström;restaurant;;;146,6;;;;;20,6;;;66,27813;16,65737;;;;;;;lunches · coffee · baked goods;operator;https://adolfstrom.com/cafe-i-adolfstrom
+📍;Pieljekaise National Park;landmark;;;157,4;;;;;;;;66,34111;16,78935;;;;;;;NP boundary · coords approx;STA/Naturkartan;
+🌙;Camp Day 7;camp;2026-08-08;x;163,0;;21,9;7,1;29,0;;;;66,36033;16,89685;;;;;;;Bäverholmen boat · Adolfström resupply;ESTIMATE;
+🌙;──────────  2026-08-08  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🏠;Jäckvik;hut;;;167,2;22,2;;;;;;;66,36779;16,99466;village;"3B 3L 3D + fresh veg — longest carry to Kvikkjokk (Day 11); ICA = best grocery";yes;yes;yes;yes;Kyrkans Fjällgård: hostel+camping · NO shop/sauna/meals · resupply at ICA in village · ☎ +46 73 521 03 69;operator;https://kyrkansfjallgardjakkvik.com/
+🛒;ICA Nära Jäckvik;shop;;;167,2;;;;;22,2;;;66,36779;16,99466;;;;;;;daily 09–20 · well-stocked · Systembolaget · pharmacy · fuel · café · fishing licences · wifi · EV charging · ☎ 0961 21050;ICA;https://www.ica.se/butiker/nara/arjeplog/ica-nara-jackvik-1007011/
+⛵;Vuonatjviken boat;boat;;;184,0;;;;;;;5,4;66,48752;17,12198;;;;;;;⏰ pre-book · cross AM · 5.4 km boat + 400 m rowboat · advance booking by phone (Sandra +46 72 221 19 11 / Geir +46 70 206 65 27) · times unverified;STA/operator;http://www.vuonatjviken.com/
+🌙;Camp Day 8;camp;2026-08-09;x;189,0;;20,6;5,4;26,0;;;;66,49174;17,23397;;;;;;;Jäckvik ICA resupply;ESTIMATE;
+🌙;──────────  2026-08-09  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🏠;Vuonatjvikens Stugby;hut;;;189,4;49,7;;;;;;;66,49191;17,24361;none;"~11:00 crossing — NOT a meal; carry d8 lunch";book;;;yes;7 cabins ~40 beds self-catering · restaurant by reservation · sauna+hot tub · NO shop · year-round;operator;http://www.vuonatjviken.com/
+🍽️;Restaurant Vuonatjviken;restaurant;;;189,4;;;;;64,8;;;66,49191;17,24361;;;;;;;Nåidde · reservation only · char/reindeer/moose · licensed;operator;http://www.vuonatjviken.com/
+♨️;Sauna Vuonatjviken;sauna;;;189,4;;;;;;64,8;;66,49191;17,24361;;;;;;;+ wood-fired hot tub (separate building);operator;http://www.vuonatjviken.com/
+📍;Arctic Circle crossing;landmark;;;198,3;;;;;;;;66,56600;17,26898;;;;;;;trail crosses 66.566 N · geographic line (signpost may differ);computed;
+🌙;Camp Day 9;camp;2026-08-10;x;220,0;;31,0;0,0;31,0;;;;66,72632;17,36689;;;;;;;Vuonatjviken boat · Arctic Circle;ESTIMATE;
+🌙;──────────  2026-08-10  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🏠;Tsielekjåkk;hut;;;239,1;15,1;;;;;;;66,84492;17,58926;none;;;;;;STF stopover · year-round · stove · latrine · emergency phone · NO shop;user/Naturkartan;https://www.naturkartan.se/en/norrbottens-lan/tsielekjakkstugan
+🌙;Camp Day 10;camp;2026-08-11;x;246,0;;26,0;0,0;26,0;;;;66,89287;17,65486;;;;;;;;ESTIMATE;
+🌙;──────────  2026-08-11  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+⛵;Sakkat boat;boat;;;251,1;;;;;;;3;66,92594;17,71902;;;;;;;⏰ 09:30 / 11:30 / 19:00 · Kungsleden–Kvikkjokk · 30 min · 280 kr adult (150 kr 11–15 · 0–10 free) · book online · aim for 11:30;battrafik;https://battrafikikvikkjokk.se/boka_transport_kvikkjokk.html
+🏠;Kvikkjokk;hut;;;254,2;15,7;;;;;;;66,95370;17,71952;village;2B 1L 2D — to Aktse/Saltoluokta (+ lunch here);yes;yes;yes;yes;shop · restaurant+café · sauna · wifi · canoe rental · road resupply · train/bus <1km · ☎ +46 971 210 22;STF-page;https://www.swedishtouristassociation.com/facilities/stf-kvikkjokk-mountain-station/
+🛒;Shop Kvikkjokk;shop;;;254,2;;;;;0,0;;;66,95370;17,71952;;;;;;;;STF-page;
+🍽️;Restaurant Kvikkjokk;restaurant;;;254,2;;;;;39,3;;;66,95370;17,71952;;;;;;;café · breakfast;STF-page;https://www.swedishtouristassociation.com/facilities/stf-kvikkjokk-mountain-station/
+♨️;Sauna Kvikkjokk;sauna;;;254,2;;;;;;39,3;;66,95370;17,71952;;;;;;;;STF-page;
+🏠;STF Pårte;hut;;;269,9;23,6;;;;;;;67,04231;17,94300;none;;;;;;NO shop · telecoms unreliable · trout fishing;STF-page;https://www.swedishtouristassociation.com/facilities/stf-parte-mountain-cabin/
+🌙;Camp Day 11;camp;2026-08-12;x;273,0;;24,0;3,0;27,0;;;;67,06452;17,97772;;;;;;;Sakkat + Kvikkjokk resupply;ESTIMATE;
+🌙;──────────  2026-08-12  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+⛵;Laitaure boat;boat;;;289,5;;;;;;;;67,11750;18,28942;;;;;;;⏰ GATE only 09:00 & 17:00 (season Jun–Sep13) · ~15 min · 300 kr adult CASH (150 kr 6–15 · 0–5 free) · NO booking — raise the flag ≤30 min before · cross ~17:00 in Plan B (afternoon, to keep the lead);STF boats guide;https://www.swedishtouristassociation.com/guides/mountains/transport/boats/
+📍;Sarek National Park;landmark;;;292,6;;;;;;;;67,17849;18,14048;;;;;;;NP boundary · coords approx (7km off trail);STA/Naturkartan;
+🏠;STF Aktse;hut;;;293,5;11,6;;;;;;;67,14867;18,30590;large;1B 1L 1D — to Saltoluokta (Day 14);;;;yes;shop · sauna · Laitaure water taxi bookable here · 💧 TOP UP — exposed plateau to Sitojaure, no reliable water on top (~6–8 km);STF-page+STA;https://www.swedishtouristassociation.com/facilities/stf-aktse-mountain-cabin/
+🛒;Shop Aktse;shop;;;293,5;;;;;30,9;;;67,14867;18,30590;;;;;;;large selection (STF shops guide);STF shops guide;https://www.swedishtouristassociation.com/guides/mountains/shops/
+♨️;Sauna Aktse;sauna;;;293,5;;;;;;30,9;;67,14867;18,30590;;;;;;;;STF-page;
+🌙;Camp Day 12;camp;2026-08-13;x;299,0;;26,0;0,0;26,0;;;;67,18557;18,38129;;;;;;;Laitaure ~17:00 (afternoon crossing to keep the lead) + Aktse;ESTIMATE;
+🌙;──────────  2026-08-13  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🛖;Stopover cabin Svijnne;shelter;;;301,8;;;;;;;;67,20391;18,42197;;;;;;;safety/stopover cabin;Naturkartan;
+⛵;Sitojaure boat;boat;;;301,8;;;;;;;;67,20395;18,42193;;;;;;;⏰ pre-book — CALL Anna/Lars Blind +46 73 079 96 03 FROM AKTSE (no signal at Svijnne landing) · info@sitojaure.com · daily year-round · times/price not published · CASH;STF boats guide;https://www.swedishtouristassociation.com/guides/mountains/transport/boats/
+🏠;STF Sitojaure;hut;;;305,1;19,3;;;;;;;67,23268;18,44072;none;;;;;;NO shop · Telia coverage;STF-page;https://www.swedishtouristassociation.com/facilities/stf-sitojaure-mountain-cabin/
+🛖;Stopover cabin Autsutjvagge;shelter;;;316,0;;;;;;;;67,32355;18,49958;;;;;;;safety/stopover cabin;Naturkartan;
+🌙;Camp Day 13;camp;2026-08-14;x;324,0;;25,0;0,0;25,0;;;;67,39065;18,51729;;;;;;;Sitojaure + camp at Saltoluokta;ESTIMATE;
+🌙;──────────  2026-08-14  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🏠;Saltoluokta;hut;;;324,4;27,7;;;;;;;67,39409;18,52076;village;1B 1D — to Teusajaure (+ meal here);yes;yes;;yes;shop · restaurant+café · wood-fired sauna · wifi · canoe rental · resupply · full mobile coverage · ☎ +46 10 190 23 50;STF-page;https://www.swedishtouristassociation.com/facilities/stf-saltoluokta-mountain-station/
+🛒;Shop Saltoluokta;shop;;;324,4;;;;;0,0;;;67,39409;18,52076;;;;;;;;STF-page;
+🍽️;Restaurant Saltoluokta;restaurant;;;324,4;;;;;42,4;;;67,39409;18,52076;;;;;;;game/char/whitefish · veg · café · pre-book dinner for a table;STF-page;https://www.swedishtouristassociation.com/facilities/stf-saltoluokta-mountain-station/
+♨️;Sauna Saltoluokta;sauna;;;324,4;;;;;;42,4;;67,39409;18,52076;;;;;;;wood-fired;STF-page;
+⛵;M/S Langas ferry;boat;;;324,4;;;;;;;;67,39409;18,52076;;;;;;;⏰ GATE Saltoluokta→Kebnats: take the ~10:00 boat to meet the 10:55 Kebnats→Vakkotavare bus · ~15 min · book online/onboard · 175 kr adult member;STA;https://www.swedishtouristassociation.com/facilities/stf-saltoluokta-mountain-station/transport/
+🚌;Bus Kebnats-Vakkotavare;bus;;;352,1;;;;;;;30;67,58169;18,10037;;;;;;;Kebnats→Vakkotavare · CONFIRMED runs Aug 15 · 10:55→12:00 (Falcks buss 931) & 16:50→17:55 (buss 934) · 213 kr · take the 10:55 (meets the ~10:00 Langas boat);confirmed Aug 15: buss 931/934, 213 kr, Falcks Omnibus · roadtoritsem.com / +46 970 240 00;https://roadtoritsem.com/sommar/
+🏠;STF Vakkotavare;hut;;;352,1;14,7;;;;;;;67,58169;18,10037;none;;;;;yes;NO shop · own bus stop (Ritsem/Saltoluokta/Gällivare) · parking;STF-page;https://www.swedishtouristassociation.com/facilities/stf-vakkotavare-mountain-cabin/
+⛵;Teusajaure boat;boat;;;366,0;;;;;;;;67,68911;18,14191;;;;;;;⏰ 09:00/15:00/18:00 (18 Jul–30 Aug) · ~1 km · 150 kr member/200 non (6–15 free/50) · NO booking — signal with flag from far shore (15-min delay) · rowboat avail · cancelled in bad weather;STF boats guide;https://www.swedishtouristassociation.com/guides/mountains/transport/boats/
+🏠;STF Teusajaure;hut;;;366,8;8,9;;;;;;;67,69476;18,15543;small;1L (Day 15);;;;yes;small shop · sauna;STF-page;https://www.swedishtouristassociation.com/facilities/stf-teusajaure-mountain-cabin/
+🛒;Shop Teusajaure;shop;;;366,8;;;;;8,9;;;67,69476;18,15543;;;;;;;small selection (STF shops guide);STF shops guide;https://www.swedishtouristassociation.com/guides/mountains/shops/
+♨️;Sauna Teusajaure;sauna;;;366,8;;;;;;8,9;;67,69476;18,15543;;;;;;;;STF-page;
+🌙;Camp Day 14;camp;2026-08-15;x;370,0;;16,0;30,0;46,0;;;;67,71330;18,20484;;;;;;;transfer: Langas boat + bus → Vakkotavare · then Teusajaure self-row;ESTIMATE;
+🌙;──────────  2026-08-15  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🏠;STF Kaitumjaure;hut;;;375,7;12,4;;;;;;;67,74653;18,29567;small;1B 1D — to Sälka;;;;yes;small shop · sauna;STF-page;https://www.swedishtouristassociation.com/facilities/stf-kaitumjaure-mountain-cabin/
+🛒;Shop Kaitumjaure;shop;;;375,7;;;;;24,3;;;67,74653;18,29567;;;;;;;small selection (STF shops guide);STF shops guide;https://www.swedishtouristassociation.com/guides/mountains/shops/
+♨️;Sauna Kaitumjaure;sauna;;;375,7;;;;;;24,3;;67,74653;18,29567;;;;;;;;STF-page;
+🏠;STF Singi;hut;;;388,1;11,9;;;;;;;67,85111;18,31606;none;;;;;;NO shop · junction (route goes straight to Sälka);STF-page;https://www.swedishtouristassociation.com/facilities/stf-singi-mountain-cabin/
+🌙;Camp Day 15;camp;2026-08-16;x;397,0;;27,0;0,0;27,0;;;;67,92114;18,28996;;;;;;;Kaitumjaure (small shop);ESTIMATE;
+🌙;──────────  2026-08-16  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🏠;STF Sälka;hut;;;400,0;12,5;;;;;;;67,94638;18,28170;large;1B 1L 1D — to Alesjaure;;;;yes;shop · sauna · 51–75 beds;STF-page+STA;https://www.swedishtouristassociation.com/facilities/stf-salka-mountain-cabin/
+🛒;Shop Sälka;shop;;;400,0;;;;;25,3;;;67,94638;18,28170;;;;;;;large selection (STF shops guide);STF shops guide;https://www.swedishtouristassociation.com/guides/mountains/shops/
+♨️;Sauna Sälka;sauna;;;400,0;;;;;;25,3;;67,94638;18,28170;;;;;;;;STF-page;
+📍;Tjäktja Pass;landmark;;;408,9;;;;;;;;68,01968;18,24694;;;;;;;1150 m · highest point on this section;STA;
+🏠;STF Tjäktja;hut;;;412,5;12,8;;;;;;;68,05165;18,24108;none;;;;;;NO shop · just S of pass · 11–25 beds;STF-page;https://www.swedishtouristassociation.com/facilities/stf-tjaktja-mountain-cabin/
+🌙;Camp Day 16;camp;2026-08-17;x;423,0;;26,0;0,0;26,0;;;;68,12109;18,39035;;;;;;;;ESTIMATE;
+🌙;──────────  2026-08-17  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🏠;STF Alesjaure;hut;;;425,3;20,7;;;;;;;68,13667;18,41479;large;1B 1L 1D — to Abiskojaure;;;;yes;shop · sauna · 76–100 beds (largest) · boat across L. Alesjaure;STF-page+STA;https://www.swedishtouristassociation.com/facilities/stf-alesjaure-mountain-cabin/
+🛒;Shop Alesjaure;shop;;;425,3;;;;;20,7;;;68,13667;18,41479;;;;;;;large selection (STF shops guide);STF shops guide;https://www.swedishtouristassociation.com/guides/mountains/shops/
+♨️;Sauna Alesjaure;sauna;;;425,3;;;;;;20,7;;68,13667;18,41479;;;;;;;;STF-page;
+⛵;Alesjaure boat;boat;;;425,3;;;;;;;6;68,13667;18,41479;;;;;;;⏰ Jul1–Aug30 · from jetty 10:30/15:30/17:30/19:00 (from cabin 10:00/15:00/17:00/18:30) · 500 kr adult (200 kr 0–12) · cards & cash · BOOK AHEAD +46 70 634 34 39 / +46 72 753 67 98 (Roland Enoksson) · saves ~6 km · PLANNED;STF boats guide;https://www.swedishtouristassociation.com/guides/mountains/transport/boats/
+🏠;STF Abiskojaure;hut;;;446,0;14,0;;;;;;;68,28615;18,59114;large;1L — to Abisko finish;;;;yes;shop · sauna;STF-page;https://www.swedishtouristassociation.com/facilities/stf-abiskojaure-mountain-cabin/
+🛒;Shop Abiskojaure;shop;;;446,0;;;;;14,0;;;68,28615;18,59114;;;;;;;large selection (STF shops guide);STF shops guide;https://www.swedishtouristassociation.com/guides/mountains/shops/
+♨️;Sauna Abiskojaure;sauna;;;446,0;;;;;;14,0;;68,28615;18,59114;;;;;;;;STF-page;
+🌙;Camp Day 17;camp;2026-08-18;x;451,0;;22,0;6,0;28,0;;;;68,30920;18,67614;;;;;;;Alesjaure boat;ESTIMATE;
+🌙;──────────  2026-08-18  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🌙;Abisko;hut;2026-08-19;x;460,0;;9,0;0,0;9,0;;;;68,35839;18,78363;village;finish — restaurant;yes;yes;yes;yes;full shop (groceries/gear/rental) · restaurant+café · sauna · wifi · laundry · train <1km · ☎ +46 10 190 24 00 · END;STF-page;https://www.swedishtouristassociation.com/facilities/stf-abisko-turiststation/
+🌙;──────────  2026-08-19  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
+🛒;Shop Abisko;shop;;;460,0;;;;;0,0;;;68,35839;18,78363;;;;;;;groceries/gear/rental;STF-page;
+🍽️;Restaurant Abisko;restaurant;;;460,0;;;;;;;;68,35839;18,78363;;;;;;;café;STF-page;https://www.swedishtouristassociation.com/facilities/stf-abisko-turiststation/
+♨️;Sauna Abisko;sauna;;;460,0;;;;;;;;68,35839;18,78363;;;;;;;;STF-page;
+🚌;Bus Abisko→Kiruna;bus;2026-08-21;;461;;;;;;;;67,8558;20,2253;;;;;;;Fri Aug 21 · rail work → replacement bus, not train · from Abisko Turiststation, 3 options that catch the 21:05: SJ 16:30→17:50 (70 kr) · SJ 16:31→17:51 (100 kr) · Länstrafiken 91 11:20→14:06 (pay onboard, most margin) · then flygbuss to KRN;transport.md;https://www.sj.se
+🚌;Transfer Kiruna→Airport;bus;2026-08-21;;462;;;;;;;;67,8211;20,3368;;;;;;;Fri Aug 21 evening · flygbuss timed to flights (~20–25 min · 120 kr · operator BOREAL from Jul 2026 — confirm an evening run meets the 21:05 · boreal.se) or taxi;transport.md;https://www.swedavia.com/kiruna/bus/
+✈️;Flight KRN→Arlanda;flight;2026-08-21;;463;;;;;;;;67,8211;20,3368;;;;;;;Fri Aug 21 · SAS 21:05→22:40 · ~€90 · TO BOOK · only slot the Abisko trains can feed without a Kiruna overnight (09:30/13:45 rejected);user/Google Flights;
+🏨;Overnight Arlanda;hotel;2026-08-21;;464;;;;;;;;59,6498;17,9238;;;;;;;Fri Aug 21 night · book near ARN (arrive 22:40 · depart 09:50) · TO BOOK;user;
+✈️;Flight ARN→home;flight;2026-08-22;;465;;;;;;;;59,6498;17,9238;;;;;;;DEPART 09:50 Sat Aug 22 · Arlanda→home · TICKETED — hard deadline · at airport ~08:00;user;

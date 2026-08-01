@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "generate-pwa-assets": "pwa-assets-generator"
+    "generate-pwa-assets": "pwa-assets-generator",
+    "diary": "tsx tools/build-diary.ts",
+    "diary:md": "tsx tools/build-diary-md.ts public/data/diary.csv tools/diary-A.md",
+    "diary:md:b": "tsx tools/build-diary.ts tools/diary-B.csv && tsx tools/build-diary-md.ts tools/diary-B.csv tools/diary-B.md",
+    "gpx": "tsx tools/build-gpx.ts"
   },
   "dependencies": {
     "vue": "^3.5.13"
@@ -15,6 +19,7 @@
   "devDependencies": {
     "@vite-pwa/assets-generator": "^0.2.6",
     "@vitejs/plugin-vue": "^5.2.1",
+    "tsx": "^4.22.4",
     "typescript": "~5.7.2",
     "vite": "^6.0.7",
     "vite-plugin-pwa": "^0.21.1",
