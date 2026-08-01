@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, watch, useTemplateRef } from 'vue'
 import type { DiaryRow } from '../data/trip'
+import { planStops, poiArrival, type PoiArrival } from '../plan'
 
 const props = defineProps<{
   rows: DiaryRow[]
@@ -8,11 +9,15 @@ const props = defineProps<{
   now?: Date | null
   speedKmh?: number | null
   totalKm?: number | null
+  startHour?: number | null
+  endHour?: number | null
 }>()
 
 // Clock-time ETA is only meaningful for nodes reachable within a long day's walk;
 // beyond that a bare "HH:MM" would span days and mislead, so it's omitted.
 const ETA_MAX_HOURS = 14
+
+const stops = computed(() => planStops(props.rows))
 
 // Every located diary feature, ordered along the route.
 const nodes = computed(() =>
@@ -21,6 +26,22 @@ const nodes = computed(() =>
     .slice()
     .sort((a, b) => (a.fromStart as number) - (b.fromStart as number)),
 )
+
+// Planned per-day crossing clock-time (from Plan A camps + start hour + made-good speed).
+function plannedFor(node: DiaryRow) {
+  if (props.startHour == null || !props.speedKmh) return null
+  if (props.totalKm != null && (node.fromStart as number) > props.totalKm) return null
+  return poiArrival(stops.value, node.fromStart as number, props.startHour, props.speedKmh)
+}
+function hhmm(clockHours: number): string {
+  const total = Math.round(clockHours * 60)
+  if (total >= 24 * 60) return 'past 24:00'
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+// A camp whose planned arrival falls after the day's end hour is a long day.
+function longDay(node: DiaryRow, planned: PoiArrival | null): boolean {
+  return node.overnight && planned != null && props.endHour != null && planned.clockHours > props.endHour
+}
 
 // Index where the "you are here" marker sits: before the first node not yet
 // reached. nodes.length means every node is behind you. null = no fix yet.
@@ -32,10 +53,10 @@ const hereIndex = computed(() => {
 })
 
 // One render list with the here-marker spliced in at hereIndex, so the marker
-// template lives in a single place.
-type Item = { here: true } | { here: false; node: DiaryRow }
+// template lives in a single place. Planned crossing time is resolved once per node here.
+type Item = { here: true } | { here: false; node: DiaryRow; planned: PoiArrival | null }
 const items = computed<Item[]>(() => {
-  const list: Item[] = nodes.value.map((node) => ({ here: false, node }))
+  const list: Item[] = nodes.value.map((node) => ({ here: false, node, planned: plannedFor(node) }))
   if (hereIndex.value != null) list.splice(hereIndex.value, 0, { here: true })
   return list
 })
@@ -94,9 +115,13 @@ watch(
         </span>
         <span class="rail"><span class="dot" /></span>
         <span class="label">
-          <span class="name">
-            {{ item.node.icon }} {{ item.node.name }}
-            <span v-if="etaLabel(item.node)" class="eta">~{{ etaLabel(item.node) }}</span>
+          <span class="name">{{ item.node.icon }} {{ item.node.name }}</span>
+          <span class="times">
+            <span v-if="item.planned" class="planned">
+              D{{ item.planned.day }} {{ hhmm(item.planned.clockHours) }}
+              <span v-if="longDay(item.node, item.planned)" class="late">· long day</span>
+            </span>
+            <span v-if="etaLabel(item.node)" class="eta">eta {{ etaLabel(item.node) }}</span>
           </span>
           <span v-if="item.node.notes" class="note">{{ item.node.notes }}</span>
         </span>
@@ -169,13 +194,20 @@ watch(
   padding-bottom: 0.6rem;
 }
 .name { font-size: 0.9rem; }
-.eta {
+.times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.6rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.72rem;
-  opacity: 0.6;
-  margin-left: 0.35rem;
+}
+.planned { opacity: 0.8; white-space: nowrap; }
+.late { color: #c2410c; }
+.eta {
+  opacity: 0.55;
   white-space: nowrap;
 }
+.passed .times { opacity: 1; }
 .note {
   font-size: 0.72rem;
   opacity: 0.6;

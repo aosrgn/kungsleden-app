@@ -64,6 +64,28 @@ export function plannedKmAtTime(stops: PlanStop[], now: Date): number | null {
   return last.km
 }
 
+export interface PoiArrival {
+  day: number // 1-based trek day this km falls on
+  clockHours: number // planned arrival time-of-day, decimal hours (may exceed the end hour on a long day)
+}
+
+// Planned clock-time you'd cross a km per Plan A: each day starts at its overnight camp
+// at startHour and you cover ground at speedKmh. The km belongs to the segment whose end
+// camp is the first at/after it (day 1 runs from the km-0 trailhead). Note: applies the
+// walking speed to the whole segment, so a boat/bus transfer day reads late.
+export function poiArrival(
+  stops: PlanStop[],
+  km: number,
+  startHour: number,
+  speedKmh: number,
+): PoiArrival | null {
+  if (!stops.length || speedKmh <= 0) return null
+  let i = stops.findIndex((s) => s.km >= km)
+  if (i === -1) i = stops.length - 1
+  const segStartKm = i === 0 ? 0 : stops[i - 1].km
+  return { day: i + 1, clockHours: startHour + (km - segStartKm) / speedKmh }
+}
+
 function sameLocalDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }

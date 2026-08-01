@@ -139,6 +139,8 @@ const statusLabel: Record<typeof status.value, string> = {
       :now="now"
       :speed-kmh="madeGoodKmh"
       :total-km="trailIndex?.totalKm ?? null"
+      :start-hour="startHour"
+      :end-hour="endHour"
       class="route"
     />
     <p v-else-if="dataError" class="data-msg">data error: {{ dataError }}</p>
