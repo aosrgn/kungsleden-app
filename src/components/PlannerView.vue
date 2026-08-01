@@ -6,6 +6,7 @@ import { usePace } from '../composables/usePace'
 import { loadTrip, type Trip } from '../data/trip'
 import { createTrailIndex } from '../trail'
 import NowPanel from './NowPanel.vue'
+import TodayPanel from './TodayPanel.vue'
 import PaceControl from './PaceControl.vue'
 import RouteStrip from './RouteStrip.vue'
 
@@ -67,6 +68,14 @@ const statusLabel: Record<typeof status.value, string> = {
       :now="now"
       class="now-panel"
     />
+    <TodayPanel
+      v-if="trip"
+      :diary="trip.diary"
+      :position-km="position?.km ?? null"
+      :now="now"
+      :pace-kmh="paceKmh"
+      class="today-panel"
+    />
     <PaceControl v-if="trip" v-model:pace-kmh="paceKmh" v-model:hours-per-day="hoursPerDay" class="pace-control" />
     <RouteStrip
       v-if="trip"
@@ -118,6 +127,7 @@ const statusLabel: Record<typeof status.value, string> = {
 }
 
 .now-panel { margin-top: 1rem; }
+.today-panel { margin-top: 0.6rem; }
 .pace-control { margin-top: 0.6rem; }
 .route { margin-top: 1rem; }
 

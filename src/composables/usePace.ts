@@ -12,12 +12,22 @@ export const PACE_PRESETS = [
   { label: 'Fast', kmh: 4.0 },
 ]
 
+// Valid input ranges (mirror PaceControl's <input min/max>). Enforced here too so
+// a corrupted/hand-edited localStorage value can't feed 0/negative/NaN into the
+// pace-driven math (ETAs, finish projection) before any UI interaction clamps it.
+const PACE_MIN = 1, PACE_MAX = 8
+const HOURS_MIN = 1, HOURS_MAX = 16
+
+function validNum(v: unknown, min: number, max: number, fallback: number): number {
+  return typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback
+}
+
 function load(): { paceKmh: number; hoursPerDay: number } {
   try {
     const s = JSON.parse(localStorage.getItem(KEY) ?? '{}')
     return {
-      paceKmh: typeof s.paceKmh === 'number' ? s.paceKmh : 3.5,
-      hoursPerDay: typeof s.hoursPerDay === 'number' ? s.hoursPerDay : 7.5,
+      paceKmh: validNum(s.paceKmh, PACE_MIN, PACE_MAX, 3.5),
+      hoursPerDay: validNum(s.hoursPerDay, HOURS_MIN, HOURS_MAX, 7.5),
     }
   } catch {
     return { paceKmh: 3.5, hoursPerDay: 7.5 }
