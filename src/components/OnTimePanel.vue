@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { DiaryRow } from '../data/trip'
-import { planStops, plannedArrivalAtKm, plannedKmAtTime, startOfDay, addDays } from '../plan'
+import { planStops, plannedKmAtTime, startOfDay, addDays } from '../plan'
+import { PACE_PRESETS } from '../composables/usePace'
 
 const props = defineProps<{
   diary: DiaryRow[]
@@ -20,13 +21,18 @@ const DEADLINE = new Date(2026, 7, 21, 12)
 // midday-arrival transfer even though the flight itself is that evening.
 const LATEST_SAFE_FINISH = addDays(startOfDay(DEADLINE), -1)
 const DAY_MS = 86400000
-const PACE_PRESETS = [3.0, 3.5, 4.0]
 
 const stops = computed(() => planStops(props.diary))
-// Plan A's finish reached at km-total, anchored at 18:00 (same as plannedKmAtTime).
-const plannedFinish = computed(() => (stops.value.length ? plannedArrivalAtKm(stops.value, props.totalKm) : null))
-const avgDailyKm = computed(() => (stops.value.length ? props.totalKm / stops.value.length : 0))
 const finished = computed(() => props.positionKm != null && props.positionKm >= props.totalKm)
+
+// Projected Abisko finish date at a given pace + the chosen hours/day, from your current
+// position. Day-granular (assumes a full walking day available regardless of the hour).
+function projectFinish(pace: number): Date | null {
+  if (props.positionKm == null) return null
+  const remaining = Math.max(0, props.totalKm - props.positionKm)
+  const daysLeft = remaining / (pace * props.hoursPerDay)
+  return addDays(startOfDay(props.now), Math.max(0, Math.ceil(daysLeft) - 1))
+}
 
 // + = ahead of Plan A: how many km past where the plan expects you right now (which
 // ramps only during the day's walking window, so being at camp in the morning reads 0).
@@ -54,33 +60,23 @@ const scheduleDir = computed(() => {
   return km > 0 ? 'ahead' : 'behind'
 })
 
-// Spare days before the flight deadline: Plan A's finish→deadline gap, shifted by how
-// many plan-days your km lead/lag amounts to. Stable through the day (no morning swing).
+// Spare days between your projected finish (at YOUR pace × hours/day) and the flight
+// deadline — so it responds to the pace selector. Stable within a day.
 const bufferDays = computed(() => {
-  if (kmDelta.value == null || !plannedFinish.value || avgDailyKm.value <= 0) return null
-  const base = (DEADLINE.valueOf() - plannedFinish.value.valueOf()) / DAY_MS
-  return Math.round((base + kmDelta.value / avgDailyKm.value) * 10) / 10
+  const finish = projectFinish(props.paceKmh)
+  return finish == null ? null : Math.round(((DEADLINE.valueOf() - finish.valueOf()) / DAY_MS) * 10) / 10
 })
 
-// Projected Abisko finish date for each pace, at the chosen hours/day. Position-only
-// (assumes a full walking day ahead regardless of the hour it's checked).
+// Projected Abisko finish date for each pace, at the chosen hours/day.
 const finishRows = computed(() => {
   if (props.positionKm == null) return []
-  const remaining = Math.max(0, props.totalKm - props.positionKm)
   const current = Math.round(props.paceKmh * 10) / 10
-  const paces = [...new Set([...PACE_PRESETS, current])].sort((a, b) => a - b)
+  const paces = [...new Set([...PACE_PRESETS.map((p) => p.kmh), current])].sort((a, b) => a - b)
   return paces.map((pace) => {
     const isCurrent = pace === current
-    // Project the "you" row from the exact pace, not the 0.1-rounded display value.
-    const kmPerDay = (isCurrent ? props.paceKmh : pace) * props.hoursPerDay
-    const daysLeft = remaining / kmPerDay
-    const date = addDays(startOfDay(props.now), Math.max(0, Math.ceil(daysLeft) - 1))
-    return {
-      pace,
-      isCurrent,
-      date,
-      risky: date.valueOf() > LATEST_SAFE_FINISH.valueOf(),
-    }
+    // "you" row projects from the exact pace, not the 0.1-rounded display value.
+    const date = projectFinish(isCurrent ? props.paceKmh : pace) as Date // positionKm != null here
+    return { pace, isCurrent, date, risky: date.valueOf() > LATEST_SAFE_FINISH.valueOf() }
   })
 })
 
