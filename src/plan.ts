@@ -26,6 +26,35 @@ export function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate())
 }
 
+export function addDays(d: Date, n: number): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
+}
+
+// Camps carry only a date, but are reached in the evening; anchor the planned
+// arrival at this hour so "ahead/behind Plan A" reads ~0 when you're at a camp on
+// its day, instead of a full day off from a midnight anchor.
+const ARRIVAL_MS = 18 * 3600 * 1000
+
+// The datetime the plan has you reaching a given km, linearly interpolated between
+// the overnight knots (each one calendar day apart, anchored at ARRIVAL_MS). Clamped
+// to the first/last stop outside the route. Used for "how far ahead/behind Plan A".
+export function plannedArrivalAtKm(stops: PlanStop[], km: number): Date | null {
+  if (!stops.length) return null
+  const at = (s: PlanStop) => s.date.valueOf() + ARRIVAL_MS
+  if (km <= stops[0].km) return new Date(at(stops[0]))
+  const last = stops[stops.length - 1]
+  if (km >= last.km) return new Date(at(last))
+  for (let i = 1; i < stops.length; i++) {
+    const a = stops[i - 1]
+    const b = stops[i]
+    if (km <= b.km) {
+      const f = (km - a.km) / (b.km - a.km)
+      return new Date(at(a) + f * (at(b) - at(a)))
+    }
+  }
+  return new Date(at(last))
+}
+
 function sameLocalDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
