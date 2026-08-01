@@ -31,9 +31,40 @@ export function addDays(d: Date, n: number): Date {
 }
 
 // Camps carry only a date, but are reached in the evening; anchor the planned
-// arrival at this hour so "ahead/behind Plan A" reads ~0 when you're at a camp on
-// its day, instead of a full day off from a midnight anchor.
+// arrival at this hour so schedule math reads ~0 when you're at a camp on its day,
+// instead of a full day off from a midnight anchor.
 const ARRIVAL_MS = 18 * 3600 * 1000
+// The plan's daily walking window: you sit at the previous camp overnight, then walk
+// from WALK_START to WALK_END (= ARRIVAL). Modeling the overnight as stationary is what
+// keeps "where should I be now" correct in the morning, not just at the evening camp.
+const WALK_START_MS = 8 * 3600 * 1000
+
+// Where Plan A expects you to be (km) at a given moment: 0 at the first day's start,
+// climbing only during each day's walking window and flat overnight at each camp,
+// clamped to the finish. Comparing this to your actual km gives an artifact-free
+// ahead/behind at any time of day.
+export function plannedKmAtTime(stops: PlanStop[], now: Date): number | null {
+  if (!stops.length) return null
+  const pts: { t: number; km: number }[] = [{ t: stops[0].date.valueOf() + WALK_START_MS, km: 0 }]
+  for (let i = 0; i < stops.length; i++) {
+    pts.push({ t: stops[i].date.valueOf() + ARRIVAL_MS, km: stops[i].km }) // camp reached (18:00)
+    if (i < stops.length - 1) {
+      pts.push({ t: stops[i + 1].date.valueOf() + WALK_START_MS, km: stops[i].km }) // still at camp next morning
+    }
+  }
+  const t = now.valueOf()
+  if (t <= pts[0].t) return pts[0].km
+  const last = pts[pts.length - 1]
+  if (t >= last.t) return last.km
+  for (let i = 1; i < pts.length; i++) {
+    if (t <= pts[i].t) {
+      const a = pts[i - 1]
+      const b = pts[i]
+      return a.km + ((t - a.t) / (b.t - a.t)) * (b.km - a.km)
+    }
+  }
+  return last.km
+}
 
 // The datetime the plan has you reaching a given km, linearly interpolated between
 // the overnight knots (each one calendar day apart, anchored at ARRIVAL_MS). Clamped

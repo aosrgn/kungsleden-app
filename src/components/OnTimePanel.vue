@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { DiaryRow } from '../data/trip'
-import { planStops, plannedArrivalAtKm, startOfDay, addDays } from '../plan'
+import { planStops, plannedArrivalAtKm, plannedKmAtTime, startOfDay, addDays } from '../plan'
 
 const props = defineProps<{
   diary: DiaryRow[]
@@ -23,39 +23,43 @@ const DAY_MS = 86400000
 const PACE_PRESETS = [3.0, 3.5, 4.0]
 
 const stops = computed(() => planStops(props.diary))
-// Plan A's finish reached at km-total, anchored the same way (18:00) as deltaMs, so
-// buffer and schedule delta share one reference frame.
+// Plan A's finish reached at km-total, anchored at 18:00 (same as plannedKmAtTime).
 const plannedFinish = computed(() => (stops.value.length ? plannedArrivalAtKm(stops.value, props.totalKm) : null))
+const avgDailyKm = computed(() => (stops.value.length ? props.totalKm / stops.value.length : 0))
 const finished = computed(() => props.positionKm != null && props.positionKm >= props.totalKm)
 
-// + = ahead of Plan A (you reached this km before the plan expects you), − = behind.
-const deltaMs = computed(() => {
+// + = ahead of Plan A: how many km past where the plan expects you right now (which
+// ramps only during the day's walking window, so being at camp in the morning reads 0).
+const kmDelta = computed(() => {
   if (props.positionKm == null || !stops.value.length) return null
-  const planned = plannedArrivalAtKm(stops.value, props.positionKm)
-  return planned ? planned.valueOf() - props.now.valueOf() : null
+  const planned = plannedKmAtTime(stops.value, props.now)
+  return planned == null ? null : props.positionKm - planned
 })
 
+// Express the km gap as walking time at the current pace — a concrete "you're N hours
+// ahead/behind" rather than an abstract ratio.
 const scheduleText = computed(() => {
-  const ms = deltaMs.value
-  if (ms == null) return null
-  const hours = Math.abs(ms) / 3600000
-  if (hours < 2) return 'on schedule'
-  const dir = ms > 0 ? 'ahead' : 'behind'
+  const km = kmDelta.value
+  if (km == null) return null
+  const hours = Math.abs(km) / props.paceKmh
+  if (hours < 0.5) return 'on schedule'
+  const dir = km > 0 ? 'ahead' : 'behind'
+  if (hours < 10) return `${hours.toFixed(1)} h ${dir}`
   if (hours < 23.5) return `${Math.round(hours)} h ${dir}`
   return `${(hours / 24).toFixed(1)} days ${dir}`
 })
 const scheduleDir = computed(() => {
-  const ms = deltaMs.value
-  if (ms == null || Math.abs(ms) < 2 * 3600000) return 'even'
-  return ms > 0 ? 'ahead' : 'behind'
+  const km = kmDelta.value
+  if (km == null || Math.abs(km) / props.paceKmh < 0.5) return 'even'
+  return km > 0 ? 'ahead' : 'behind'
 })
 
-// Spare days before the flight deadline, shifted by your ±schedule. Same anchor as
-// deltaMs (plannedFinish is 18:00-anchored), so it's internally consistent.
+// Spare days before the flight deadline: Plan A's finish→deadline gap, shifted by how
+// many plan-days your km lead/lag amounts to. Stable through the day (no morning swing).
 const bufferDays = computed(() => {
-  if (deltaMs.value == null || !plannedFinish.value) return null
+  if (kmDelta.value == null || !plannedFinish.value || avgDailyKm.value <= 0) return null
   const base = (DEADLINE.valueOf() - plannedFinish.value.valueOf()) / DAY_MS
-  return Math.round((base + deltaMs.value / DAY_MS) * 10) / 10
+  return Math.round((base + kmDelta.value / avgDailyKm.value) * 10) / 10
 })
 
 // Projected Abisko finish date for each pace, at the chosen hours/day. Position-only
