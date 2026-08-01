@@ -3,17 +3,24 @@ import { computed, onMounted, ref } from 'vue'
 import { useGeolocation } from '../composables/useGeolocation'
 import { useNow } from '../composables/useNow'
 import { usePace } from '../composables/usePace'
+import { useDayLog } from '../composables/useDayLog'
 import { loadTrip, type Trip } from '../data/trip'
 import { createTrailIndex } from '../trail'
 import NowPanel from './NowPanel.vue'
 import TodayPanel from './TodayPanel.vue'
 import OnTimePanel from './OnTimePanel.vue'
+import DayLogPanel from './DayLogPanel.vue'
 import PaceControl from './PaceControl.vue'
 import RouteStrip from './RouteStrip.vue'
 
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
 const now = useNow()
 const { paceKmh, hoursPerDay } = usePace()
+const { marks, mark, undo } = useDayLog()
+
+function markDayStart() {
+  if (position.value) mark(position.value.km, now.value.valueOf())
+}
 
 const trip = ref<Trip | null>(null)
 const dataError = ref<string>('')
@@ -87,6 +94,14 @@ const statusLabel: Record<typeof status.value, string> = {
       :hours-per-day="hoursPerDay"
       class="ontime-panel"
     />
+    <DayLogPanel
+      v-if="trip"
+      :marks="marks"
+      :position-km="position?.km ?? null"
+      class="daylog-panel"
+      @mark="markDayStart"
+      @undo="undo"
+    />
     <PaceControl v-if="trip" v-model:pace-kmh="paceKmh" v-model:hours-per-day="hoursPerDay" class="pace-control" />
     <RouteStrip
       v-if="trip"
@@ -140,6 +155,7 @@ const statusLabel: Record<typeof status.value, string> = {
 .now-panel { margin-top: 1rem; }
 .today-panel { margin-top: 0.6rem; }
 .ontime-panel { margin-top: 0.6rem; }
+.daylog-panel { margin-top: 0.6rem; }
 .pace-control { margin-top: 0.6rem; }
 .route { margin-top: 1rem; }
 

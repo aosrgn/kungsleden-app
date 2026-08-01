@@ -24,10 +24,14 @@ the device position projected onto the trail line.
   is 2-D and the diary has none, so elevation is dropped everywhere.)
 - **TODAY** — planned stop + ETA · huts passed before the planned stop · next hut if
   reachable ~2 h past the stop at pace.
-- **ON-TIME** — projected Abisko finish under 4 paces (Slow 3.0 / Normal 3.5 / Fast 4.0 /
-  custom) · distance-based on-track ratio · ±days vs Plan A · buffer days left.
+- **ON-TIME** — vs Plan A as concrete hours/days (camps anchored at an 18:00 arrival, so
+  being on-plan reads ~0) · buffer days left before the flight · projected Abisko finish
+  per pace (finishes on/after Aug 21 flagged "risks flight").
+- **DAY LOG** — a "Mark day start" button logs the trail km each morning; shows each
+  day's distance (next mark − this mark; the last runs to your current position).
 
-Pace input: Slow (3.0) · Normal (3.5) · Fast (4.0) · custom km/h.
+Pace input: Slow (3.0) · Normal (3.5) · Fast (4.0) · custom km/h, plus walking hours/day
+(drives the finish projection). Both persisted to localStorage.
 
 ### Explicitly cut (no v2 — the app is disposable after the trek)
 Map/tiles, full DP planner, day-card scoring, drag-to-reshuffle, diff display, food
@@ -74,10 +78,11 @@ footer badge (`deploy.yml` sets `VITE_COMMIT_SHA`/`VITE_BUILD_TIME`). Confirm fr
 comparing the badge to the latest commit SHA.
 
 ## Status
-Phase 1 done: geolocation composable, map removed, data bundled + loaded, route strip,
-manual Update button + precache. Phase 2 done: position → km projection (`src/trail.ts`),
-position-anchored strip, NOW panel (km · section · daylight). **Pending:** Phase 3 (TODAY
-+ ON-TIME + pace selector).
+Built: geolocation composable, map removed, data bundled + loaded, manual Update button
++ precache; position → km projection (`src/trail.ts`); position-anchored route strip with
+ETAs; panels NOW (km · section · daylight), TODAY (stop ETA · huts), ON-TIME (vs Plan A ·
+buffer · finish-per-pace); pace + hours/day selector; DAY LOG (daily distances). All the
+planned functionality is in place.
 
 ## Style
 Senior TS/Vue/Node dev. Terse. No trailing summaries. Lists over prose. Verify claims
