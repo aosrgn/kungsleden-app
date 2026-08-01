@@ -14,10 +14,10 @@ icon;name;type;date;overnight;from_start;to_next_hut;hiked;not_hiked;total;to_ne
 ♨️;Sauna Tärnasjö;sauna;;;36,5;;;;;;32,7;;65,98843;15,49465;;;;;;;by the lake;STF-page;
 🏠;STF Tärnasjö;hut;;;36,6;13,5;;;;;;;65,98881;15,49730;large;1L 1D (Day 3);;;;yes;large shop · sauna by lake · lake swim/fish;STF-page+STA;https://www.swedishtouristassociation.com/facilities/stf-tarnasjo-mountain-cabin/
 🛒;Shop Tärnasjö;shop;;;36,6;;;;;32,6;;;65,98881;15,49730;;;;;;;large selection (STF shops guide);STF shops guide;https://www.swedishtouristassociation.com/guides/mountains/shops/
-🌙;Camp Day 3;camp;2026-08-04;x;46,0;;21,0;0,0;21,0;;;;65,97494;15,67908;;;;;;;ease-in · past Serve;ESTIMATE;
+🌙;Camp Day 3;camp;2026-08-04;x;46,0;;21,0;0,0;21,0;;;;65,97494;15,67908;;;;;;;ease-in · Tärnasjö (7 bridges);ESTIMATE;
 🌙;──────────  2026-08-04  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
 🏠;STF Serve;hut;;;50,1;19,1;;;;;;;65,97234;15,76422;none;;;;;yes;NO shop · self-catering;STF-page;https://www.swedishtouristassociation.com/facilities/stf-serve-mountain-cabin/
-🌙;Camp Day 4;camp;2026-08-05;x;69,0;;23,0;0,0;23,0;;;;65,93954;16,09297;;;;;;;ease-in · Aigert (large shop);ESTIMATE;
+🌙;Camp Day 4;camp;2026-08-05;x;69,0;;23,0;0,0;23,0;;;;65,93954;16,09297;;;;;;;ease-in · past Serve · Aigert (large shop);ESTIMATE;
 🌙;──────────  2026-08-05  ──────────;divider;;;;;;;;;;;;;;;;;;;;;
 🏠;STF Aigert;hut;;;69,2;6,8;;;;;;;65,94138;16,09457;large;"top up — large shop (Day 4 camp); Ammarnäs village next morning";;;;yes;shop · wood-fired sauna · ~8km from Ammarnäs;STF-page+STA;https://www.swedishtouristassociation.com/facilities/stf-aigert-mountain-cabin/
 🛒;Shop Aigert;shop;;;69,2;;;;;6,8;;;65,94138;16,09457;;;;;;;large selection (STF shops guide);STF shops guide;https://www.swedishtouristassociation.com/guides/mountains/shops/
