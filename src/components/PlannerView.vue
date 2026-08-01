@@ -19,7 +19,8 @@ const { startHour, endHour, seedKmDay } = useSpeed()
 const { marks, mark, undo } = useDayLog()
 
 function markDayStart() {
-  if (positionKm.value != null) mark(positionKm.value, now.value.valueOf())
+  // Marks from the REAL on-trail position only — never the simulated km (§ below).
+  if (realPositionKm.value != null) mark(realPositionKm.value, now.value.valueOf())
 }
 
 // Measured average daily distance: the seed as one "day -1" prior plus every completed
@@ -57,7 +58,18 @@ const position = computed(() =>
 // pollute the day log — only treat the position as on-route within this offset.
 const OFF_TRAIL_KM = 2
 const onTrail = computed(() => position.value != null && position.value.offsetKm <= OFF_TRAIL_KM)
-const positionKm = computed(() => (onTrail.value ? position.value!.km : null))
+// The real on-route km — drives the day log (mark button) so a simulated km can't pollute it.
+const realPositionKm = computed(() => (onTrail.value ? position.value!.km : null))
+
+// Test/preview override: type a km to exercise the planner off-trail (before the trek).
+// null = off (use the real GPS-derived km). Every panel + the strip reads this.
+const simKm = ref<number | null>(null)
+const positionKm = computed(() => (simKm.value != null ? simKm.value : realPositionKm.value))
+function onSimKm(e: Event) {
+  const v = parseFloat((e.target as HTMLInputElement).value)
+  const total = trailIndex.value?.totalKm ?? 460
+  simKm.value = Number.isFinite(v) ? Math.min(total, Math.max(0, v)) : null
+}
 
 const statusLabel: Record<typeof status.value, string> = {
   idle: '',
@@ -76,7 +88,8 @@ const statusLabel: Record<typeof status.value, string> = {
       <span class="status">{{ statusLabel[status] }}</span>
     </header>
 
-    <p v-if="coords" class="coords">
+    <p v-if="simKm != null" class="coords sim">⚠ simulating km {{ simKm.toFixed(1) }} — not real GPS</p>
+    <p v-else-if="coords" class="coords">
       {{ coords.lat.toFixed(5) }}, {{ coords.lng.toFixed(5) }} · ±{{ Math.round(coords.acc) }}m
       <template v-if="position && onTrail"> · {{ Math.round(position.offsetKm * 1000) }}m off-trail</template>
       <template v-else-if="position"> · off route ({{ position.offsetKm.toFixed(0) }} km) — planner paused</template>
@@ -118,7 +131,7 @@ const statusLabel: Record<typeof status.value, string> = {
     <DayLogPanel
       v-if="trip"
       :marks="marks"
-      :position-km="positionKm"
+      :position-km="realPositionKm"
       class="daylog-panel"
       @mark="markDayStart"
       @undo="undo"
@@ -147,6 +160,12 @@ const statusLabel: Record<typeof status.value, string> = {
     <p v-else class="data-msg">loading route…</p>
 
     <div class="diag">
+      <div class="sim-row">
+        <label>simulate km:
+          <input type="number" step="1" min="0" :value="simKm ?? ''" placeholder="off" @change="onSimKm" />
+        </label>
+        <button v-if="simKm != null" @click="simKm = null">clear</button>
+      </div>
       <div>standalone: {{ isStandalone ? 'yes' : 'no' }}</div>
       <div>permission: {{ permState }}</div>
       <div v-if="lastError">err: {{ lastError }}</div>
@@ -197,12 +216,38 @@ const statusLabel: Record<typeof status.value, string> = {
   opacity: 0.7;
 }
 
+.coords.sim { color: #c2410c; opacity: 1; }
+
 .diag {
   margin-top: 0.75rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.72rem;
   opacity: 0.6;
   line-height: 1.5;
+}
+.sim-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.sim-row input {
+  width: 4rem;
+  padding: 0.15rem 0.3rem;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 0.3rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.sim-row button {
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  border-radius: 0.3rem;
+  border: 1px solid #0a3d2e;
+  background: #0a3d2e;
+  color: #f4f1ea;
+  cursor: pointer;
 }
 
 button {
