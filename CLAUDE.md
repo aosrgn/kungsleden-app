@@ -19,19 +19,28 @@ line of the diary POIs by km, position anchored) plus stat panels. Everything is
 the device position projected onto the trail line.
 
 - **Route strip** — every located diary feature as a node (icon · name · km), overnight
-  stops emphasised. Position anchoring + per-node ETA layer on top.
+  stops emphasised, anchored to your position. Each POI shows its **planned per-day
+  crossing clock-time** (`D{n} HH:MM`, from that day's camp + start hour + made-good speed;
+  a late camp arrival is flagged "long day") plus a live `eta HH:MM` from your position.
 - **NOW** — km along route · section · daylight left. (No elevation: the trail geojson
   is 2-D and the diary has none, so elevation is dropped everywhere.)
 - **TODAY** — planned stop + ETA · huts passed before the planned stop · next hut if
-  reachable ~2 h past the stop at pace.
-- **ON-TIME** — vs Plan A as concrete hours/days (camps anchored at an 18:00 arrival, so
-  being on-plan reads ~0) · buffer days left before the flight · projected Abisko finish
-  per pace (finishes on/after Aug 21 flagged "risks flight").
+  reachable ~2 h past the stop.
+- **ON-TIME** — vs Plan A as concrete hours/days (camps anchored at 18:00; plan position
+  ramps only during the walking window, so being on-plan reads ~0 at any hour) · buffer
+  days left · single projected Abisko finish (on/after Aug 21 flagged "risks flight").
 - **DAY LOG** — a "Mark day start" button logs the trail km each morning; shows each
-  day's distance (next mark − this mark; the last runs to your current position).
+  day's distance (next mark − this mark; the last runs to your current position). Also
+  **feeds the measured average km/day** below, so marking is load-bearing for projections.
 
-Pace input: Slow (3.0) · Normal (3.5) · Fast (4.0) · custom km/h, plus walking hours/day
-(drives the finish projection). Both persisted to localStorage.
+### Speed model (`useSpeed.ts` + `SpeedControl.vue`)
+Unified: **start hour + end hour** (daily walking window) and a **seed km/day** (~25,
+Plan A's rate). `avgKmDay` is measured from the day-log — the seed as one "day −1" prior
+plus every completed day, so real days progressively outweigh it. `madeGoodKmh =
+avgKmDay ÷ (end − start)` (breaks included) drives POI times and ETAs; `avgKmDay` drives
+the finish/buffer. There is **no km/h "pace" input** — it was replaced by this. All three
+inputs persist to localStorage. Off-trail fixes (offset > 2 km) don't drive the planner
+or the day log.
 
 ### Explicitly cut (no v2 — the app is disposable after the trek)
 Map/tiles, full DP planner, day-card scoring, drag-to-reshuffle, diff display, food
@@ -84,9 +93,10 @@ comparing the badge to the latest commit SHA.
 ## Status
 Built: geolocation composable, map removed, data bundled + loaded, manual Update button
 + precache; position → km projection (`src/trail.ts`); position-anchored route strip with
-ETAs; panels NOW (km · section · daylight), TODAY (stop ETA · huts), ON-TIME (vs Plan A ·
-buffer · finish-per-pace); pace + hours/day selector; DAY LOG (daily distances). All the
-planned functionality is in place.
+per-day planned crossing times + live ETAs; panels NOW (km · section · daylight), TODAY
+(stop ETA · huts), ON-TIME (vs Plan A · buffer · single projected finish); the unified
+speed model (start/end window + measured avg km/day, no km/h pace); DAY LOG (daily
+distances, feeds avgKmDay). All the planned functionality is in place.
 
 ## Style
 Senior TS/Vue/Node dev. Terse. No trailing summaries. Lists over prose. Verify claims
