@@ -67,10 +67,14 @@ Vue 3 + TS + Vite + `vite-plugin-pwa`. No backend, no map library. Geolocation l
 - Field workflow: drive changes from the phone via Claude Code in the cloud → commit →
   push → GitHub Pages deploys → reload the app → tap Update.
 
-## Known iOS issue (kept working strategy)
-iOS 18 standalone-PWA geolocation is broken (always `code=1`, no prompt). Confirmed iOS
-bug. `useGeolocation.ts` has a 3-strategy fallback (`minimal` / `low-acc` / `delayed`)
-that recovers it. Don't debug further — accept the workaround.
+## Known iOS geolocation gotcha
+iOS-18 standalone PWAs have a history of returning `code=1` (denied, no prompt), and
+`useGeolocation.ts` keeps a 3-strategy fallback (`minimal` / `low-acc` / `delayed`) for it.
+BUT a denial hit in testing turned out to be a **device Location Services setting**, not
+the code — so if location fails in the field, check **Settings → Privacy & Security →
+Location Services** (on; Safari Websites = Ask/While Using) and Safari's per-site Location
+permission FIRST, before touching the app. Geolocation is only triggered by a user tap
+("Locate me"), per the iOS gesture requirement.
 
 ## Build metadata
 Every build stamps `__COMMIT_SHA__` + `__BUILD_TIME__` via Vite defines, rendered in the

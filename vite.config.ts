@@ -22,9 +22,10 @@ export default defineConfig({
         description: 'Hemavan → Abisko thru-hike planner',
         theme_color: '#0a3d2e',
         background_color: '#f4f1ea',
-        // 'browser' (not 'standalone'): iOS 18 breaks geolocation in standalone PWAs
-        // (always code=1). Browser mode keeps Safari's chrome but restores location.
-        display: 'browser',
+        // Fullscreen PWA. iOS-18 standalone geolocation has been flaky historically, but
+        // a denial hit in testing traced to a device Location Services setting, not the
+        // display mode — so keep standalone and check Settings first if location fails.
+        display: 'standalone',
         start_url: '/',
         scope: '/',
         icons: [
