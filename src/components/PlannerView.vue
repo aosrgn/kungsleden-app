@@ -12,6 +12,7 @@ import OnTimePanel from './OnTimePanel.vue'
 import DayLogPanel from './DayLogPanel.vue'
 import SpeedControl from './SpeedControl.vue'
 import RouteStrip from './RouteStrip.vue'
+import GpxExport from './GpxExport.vue'
 
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
 const now = useNow()
@@ -153,6 +154,7 @@ const statusLabel: Record<typeof status.value, string> = {
       :made-good-kmh="madeGoodKmh"
       class="speed-control"
     />
+    <GpxExport class="gpx-export" />
     <RouteStrip
       v-if="trip"
       :rows="trip.diary"
@@ -216,6 +218,7 @@ const statusLabel: Record<typeof status.value, string> = {
 .ontime-panel { margin-top: 0.6rem; }
 .daylog-panel { margin-top: 0.6rem; }
 .speed-control { margin-top: 0.6rem; }
+.gpx-export { margin-top: 0.6rem; }
 .route { margin-top: 1rem; }
 
 .data-msg {

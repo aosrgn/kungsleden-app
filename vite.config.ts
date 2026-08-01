@@ -12,8 +12,9 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'logo.svg'],
       workbox: {
-        // precache the bundled trip data too, so the route works fully offline
-        globPatterns: ['**/*.{js,wasm,css,html,ico,png,svg,webmanifest,csv,geojson}'],
+        // precache the bundled trip data too, so the route works fully offline —
+        // gpx included so the field-map export works with no signal
+        globPatterns: ['**/*.{js,wasm,css,html,ico,png,svg,webmanifest,csv,geojson,gpx}'],
       },
       manifest: {
         id: '/',

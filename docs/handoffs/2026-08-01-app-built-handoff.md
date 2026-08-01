@@ -110,10 +110,11 @@ root, any Node — no devbox needed):
   (idempotent). **Run this after any coord/km edit** so the km stay consistent.
 - `npm run diary:md` / `npm run diary:md:b` — `build-diary-md.ts`: regenerates the readable
   `tools/diary-A.md` / `tools/diary-B.md` day-by-day views.
-- `npm run gpx` — `build-gpx.ts`: rebuilds the field map `tools/kungsleden.gpx` (emoji
+- `npm run gpx` — `build-gpx.ts`: rebuilds the field map `public/data/kungsleden.gpx` (emoji
   labels, A/B camps + boat/shop/bus pins) from `diary.csv` + `tools/diary-B.csv` +
   `tools/kungsleden-base.gpx`. You still **manually re-import that GPX into Garmin/
-  Footpath/Guru** on the phone.
+  Footpath/Guru** on the phone — via the app's **Export field GPX** button (share sheet;
+  `GpxExport.vue`), since iOS renders a fetched `.gpx` inline instead of downloading it.
 - `tools/paths.ts` holds the paths; `tools/poi-labels.ts` the emoji/shorten rules.
 
 So from a clone you can do BOTH: hand-edit `diary.csv` (safe for `notes` / text — the app

@@ -48,17 +48,23 @@ tracking, elevation chart, mobile-coverage warnings, water-proximity, cloud LLM,
 runtime file upload / IndexedDB / persistence / verification badge. Data is baked in.
 
 ## Data — baked in, single authoritative copy
-`public/data/diary.csv` (plan + POIs + gates; `;`-delimited, comma decimals) and
-`public/data/kungsleden.geojson` (trail LineString + POI points) ship with the app and
-are precached for offline use. `src/data/trip.ts` loads + parses them (`loadTrip()`).
+`public/data/diary.csv` (plan + POIs + gates; `;`-delimited, comma decimals),
+`public/data/kungsleden.geojson` (trail LineString + POI points) and
+`public/data/kungsleden.gpx` (the generated field map) ship with the app and are precached
+for offline use. `src/data/trip.ts` loads + parses the first two (`loadTrip()`).
 
-These two files are the **single authoritative copies**. The diary/GPX generators are
+These three files are the **single authoritative copies**. The diary/GPX generators are
 vendored in **`tools/`** and wired to npm scripts (run from the repo root, any Node):
 `npm run diary` (reproject coords→km, rewrite `diary.csv`), `npm run diary:md[:b]`
-(regenerate the readable `tools/diary-A.md`/`diary-B.md`), `npm run gpx` (rebuild the field
-map `tools/kungsleden.gpx` for Garmin/Footpath/Guru — re-import manually). `tools/` is
-excluded from the app typecheck (`include` is `src/**`). Run `npm run diary` after any
-coord/km edit so the km stay consistent with the trail line.
+(regenerate the readable `tools/diary-A.md`/`diary-B.md`), `npm run gpx` (rebuild
+`public/data/kungsleden.gpx`). `tools/` is excluded from the app typecheck (`include` is
+`src/**`). Run `npm run diary` after any coord/km edit so the km stay consistent with the
+trail line. All generators are idempotent — a rerun with no input change is a no-op.
+
+**Getting the GPX onto the phone:** `GpxExport.vue` fetches the precached GPX and hands it
+to `navigator.share({files})` → the iOS share sheet → Garmin/Footpath/Guru, falling back to
+an `<a download>` where Web Share can't take files. Fetching the raw file directly doesn't
+work: iOS serves `.gpx` as `text/plain` and renders it inline instead of downloading.
 
 ## Sibling projects (all under `~/Development/kungsleden/`)
 - **`../data/`** — NOT in this repo, local-only, NOT a git repo. Holds only `export.ts`
