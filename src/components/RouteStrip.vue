@@ -1,34 +1,61 @@
 <script setup lang="ts">
 import { computed, nextTick, watch, useTemplateRef } from 'vue'
 import type { DiaryRow } from '../data/trip'
-import { planStops, poiArrival, type PoiArrival } from '../plan'
+import { planStops, poiArrival, realisedStops, type PoiArrival, type CampMark } from '../plan'
 
 const props = defineProps<{
   rows: DiaryRow[]
+  camps?: { km: number; day: number; label: string }[]
   positionKm?: number | null
   now?: Date | null
   speedKmh?: number | null
   totalKm?: number | null
   startHour?: number | null
   endHour?: number | null
+  marks?: CampMark[]
 }>()
 
 // Clock-time ETA is only meaningful for nodes reachable within a long day's walk;
 // beyond that a bare "HH:MM" would span days and mislead, so it's omitted.
 const ETA_MAX_HOURS = 14
 
-const stops = computed(() => planStops(props.rows))
+// A camp you actually slept at, rendered on the line as a pseudo-row so the km/passed/
+// here-marker machinery treats it like any other node.
+const CAMP_TYPE = 'camp-mark'
 
-// Every located diary feature, ordered along the route.
-const nodes = computed(() =>
-  props.rows
-    .filter((r) => r.fromStart != null)
-    .slice()
-    .sort((a, b) => (a.fromStart as number) - (b.fromStart as number)),
+// Each day's crossing times run from the REAL camp that started it, where one is logged.
+const stops = computed(() => realisedStops(planStops(props.rows), props.marks ?? []))
+
+const campRows = computed<DiaryRow[]>(() =>
+  (props.camps ?? []).map((c) => ({
+    icon: '⛺',
+    name: c.label,
+    type: CAMP_TYPE,
+    date: '',
+    overnight: false,
+    fromStart: c.km,
+    lat: null,
+    lon: null,
+    toNextHut: null,
+    crossedKm: null,
+    hiked: null,
+    notHiked: null,
+    total: null,
+    notes: '',
+  })),
 )
 
-// Planned per-day crossing clock-time (from Plan A camps + start hour + made-good speed).
+// Every located diary feature plus your own camps, ordered along the route.
+const nodes = computed(() =>
+  [...props.rows.filter((r) => r.fromStart != null), ...campRows.value].sort(
+    (a, b) => (a.fromStart as number) - (b.fromStart as number),
+  ),
+)
+
+// Planned per-day crossing clock-time (from the day's camp + start hour + made-good
+// speed). Your own camps are history, not a schedule — they get no planned time.
 function plannedFor(node: DiaryRow) {
+  if (node.type === CAMP_TYPE) return null
   if (props.startHour == null || !props.speedKmh) return null
   if (props.totalKm != null && (node.fromStart as number) > props.totalKm) return null
   return poiArrival(stops.value, node.fromStart as number, props.startHour, props.speedKmh)
@@ -76,6 +103,7 @@ function isPassed(node: DiaryRow): boolean {
 // Clock-time you'd reach a node ahead, at the current pace; null if not computable
 // or too far ahead to render as a same-ish-day time.
 function etaLabel(node: DiaryRow): string | null {
+  if (node.type === CAMP_TYPE) return null
   if (props.positionKm == null || props.now == null || !props.speedKmh) return null
   // Post-hike transport rows sit beyond the trail end — you don't walk to them.
   if (props.totalKm != null && (node.fromStart as number) > props.totalKm) return null
@@ -108,7 +136,15 @@ watch(
         <span class="rail"><span class="here-dot" /></span>
         <span class="here-label">You are here</span>
       </li>
-      <li v-else class="node" :class="{ overnight: item.node.overnight, passed: isPassed(item.node) }">
+      <li
+        v-else
+        class="node"
+        :class="{
+          overnight: item.node.overnight,
+          camp: item.node.type === 'camp-mark',
+          passed: isPassed(item.node),
+        }"
+      >
         <span class="km">
           <template v-if="positionKm == null">{{ (item.node.fromStart as number).toFixed(1) }}</template>
           <template v-else>{{ deltaLabel(item.node) }}</template>
@@ -213,6 +249,18 @@ watch(
   opacity: 0.6;
   line-height: 1.35;
 }
+
+/* camps you actually slept at — squared off, so they read as fact next to the round
+   planned nodes, and stay legible after .passed dims them */
+.camp .dot {
+  top: 0.4rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 0.15rem;
+  background: #b45309;
+}
+.camp .name { font-weight: 650; color: #b45309; }
+.camp.passed { opacity: 0.72; }
 
 /* overnight stops stand out along the line */
 .overnight .dot {

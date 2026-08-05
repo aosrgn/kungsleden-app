@@ -7,7 +7,16 @@ const props = defineProps<{
   positionKm: number | null
   trekStart: Date | null
 }>()
-const emit = defineEmits<{ mark: []; undo: [] }>()
+const emit = defineEmits<{ mark: []; undo: []; setKm: [i: number, km: number]; remove: [i: number] }>()
+
+// Committed on change (not per keystroke) so a half-typed "4" doesn't momentarily move
+// the camp to km 4. A blank or unparseable value reverts to what's stored.
+function onKm(i: number, e: Event) {
+  const el = e.target as HTMLInputElement
+  const v = parseFloat(el.value.replace(',', '.'))
+  if (Number.isFinite(v) && v >= 0) emit('setKm', i, v)
+  else el.value = props.marks[i].km.toFixed(1)
+}
 
 const DAY_MS = 86400000
 const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).valueOf()
@@ -29,8 +38,10 @@ const days = computed(() =>
     const at = new Date(m.at)
     return {
       key: m.at,
+      i,
       n: trekDay(at),
       at,
+      campKm: m.km,
       km: endKm == null ? null : Math.max(0, endKm - m.km),
       inProgress: last,
     }
@@ -57,13 +68,26 @@ const dayLabel = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'n
       <li v-for="d in days" :key="d.key">
         <span class="d">D{{ d.n }}</span>
         <span class="date">{{ dayLabel(d.at) }}</span>
+        <label class="camp">
+          <span class="at">camp</span>
+          <input
+            :value="d.campKm.toFixed(1)"
+            type="number"
+            step="0.1"
+            min="0"
+            inputmode="decimal"
+            @change="onKm(d.i, $event)"
+          />
+        </label>
         <span class="km">
           <template v-if="d.km == null">—</template>
           <template v-else>{{ d.km.toFixed(1) }} km<span v-if="d.inProgress" class="sofar"> so far</span></template>
         </span>
+        <button class="del" title="remove this camp" @click="emit('remove', d.i)">×</button>
       </li>
       <li v-if="days.length > 1" class="total">
-        <span class="d"></span><span class="date">total</span><span class="km">{{ total.toFixed(1) }} km</span>
+        <span class="d"></span><span class="date">total</span><span class="camp"></span>
+        <span class="km">{{ total.toFixed(1) }} km</span><span class="del"></span>
       </li>
     </ol>
     <p v-else class="empty">Tap “Mark camp” at each overnight stop to log daily distances.</p>
@@ -128,10 +152,39 @@ const dayLabel = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'n
 }
 .days li {
   display: grid;
-  grid-template-columns: 2.2rem 1fr auto;
-  align-items: baseline;
-  gap: 0.5rem;
+  grid-template-columns: 2.2rem auto 1fr auto 1rem;
+  align-items: center;
+  gap: 0.45rem;
   font-size: 0.85rem;
+}
+.camp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+.camp .at { opacity: 0.6; }
+.camp input {
+  width: 3.4rem;
+  padding: 0.1rem 0.25rem;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 0.3rem;
+  background: transparent;
+  color: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  text-align: right;
+}
+.del {
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.35;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
 }
 .days .d {
   font-weight: 650;

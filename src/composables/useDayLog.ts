@@ -54,6 +54,17 @@ export function useDayLog() {
 
   function mark(km: number, at: number) {
     marks.value.push({ km, at })
+    marks.value.sort((a, b) => a.at - b.at)
+  }
+  // Correcting a camp after the fact: you tapped "Mark camp" an hour up the trail, or
+  // forgot until the evening. The km is the only thing worth editing — the date is what
+  // slots the row into the right trek day.
+  function setKm(i: number, km: number) {
+    const m = marks.value[i]
+    if (m && Number.isFinite(km)) m.km = Math.max(0, km)
+  }
+  function remove(i: number) {
+    if (i >= 0 && i < marks.value.length) marks.value.splice(i, 1)
   }
   function undo() {
     marks.value.pop()
@@ -62,5 +73,5 @@ export function useDayLog() {
     marks.value = []
   }
 
-  return { marks, mark, undo, clear }
+  return { marks, mark, setKm, remove, undo, clear }
 }

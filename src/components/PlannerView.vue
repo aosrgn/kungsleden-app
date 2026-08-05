@@ -18,7 +18,7 @@ import GpxExport from './GpxExport.vue'
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
 const now = useNow()
 const { startHour, endHour, kmDay } = useSpeed()
-const { marks, mark, undo } = useDayLog()
+const { marks, mark, setKm, remove, undo } = useDayLog()
 
 function markCamp() {
   // Marks from the REAL on-trail position only — never the simulated km (§ below).
@@ -41,8 +41,22 @@ onMounted(async () => {
 })
 
 const trailIndex = computed(() => (trip.value ? createTrailIndex(trip.value.trail) : null))
-// Day 1 of the trek, from the diary — the day log numbers rows against it.
+// Day 1 of the trek, from the diary — the day log and the strip's camp pins number
+// their rows against it, so a day you forgot to mark leaves a gap instead of a reshuffle.
 const trekStart = computed(() => (trip.value ? (planStops(trip.value.diary)[0]?.date ?? null) : null))
+
+const DAY_MS = 86400000
+const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).valueOf()
+const campPins = computed(() =>
+  marks.value.map((m) => {
+    const at = new Date(m.at)
+    const day = trekStart.value
+      ? Math.max(1, Math.round((midnight(at) - midnight(trekStart.value)) / DAY_MS) + 1)
+      : 1
+    const date = at.toLocaleDateString([], { month: 'short', day: 'numeric' })
+    return { km: m.km, day, label: `Camp D${day} · ${date}` }
+  }),
+)
 const position = computed(() =>
   trailIndex.value && coords.value
     ? trailIndex.value.project(coords.value.lat, coords.value.lng)
@@ -138,6 +152,8 @@ const statusLabel: Record<typeof status.value, string> = {
       class="daylog-panel"
       @mark="markCamp"
       @undo="undo"
+      @set-km="setKm"
+      @remove="remove"
     />
     <SpeedControl
       v-if="trip"
@@ -151,6 +167,8 @@ const statusLabel: Record<typeof status.value, string> = {
     <RouteStrip
       v-if="trip"
       :rows="trip.diary"
+      :camps="campPins"
+      :marks="marks"
       :position-km="positionKm"
       :now="now"
       :speed-kmh="madeGoodKmh"

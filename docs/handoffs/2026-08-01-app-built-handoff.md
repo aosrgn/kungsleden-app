@@ -63,8 +63,10 @@ Composables (`src/composables/`):
   Settings first if location fails.
 - `useNow.ts` — one shared minute clock (drives daylight, ETAs live).
 - `useSpeed.ts` — the speed inputs (see §4).
-- `useDayLog.ts` — persisted camp marks (`{km, at}`). **Journal only — feeds no
-  projection** (§4). Seeds the trek's days 1–4 if the stored log is empty.
+- `useDayLog.ts` — persisted camp marks (`{km, at}`), each with an editable km
+  (`setKm`/`remove`). **Journal only — feeds no projection** (§4), though `realisedStops`
+  does read the marks to anchor each day's POI times. Seeds the trek's days 1–4 if the
+  stored log is empty.
 
 Logic modules:
 - `src/data/trip.ts` — `loadTrip()` fetches + parses `public/data/diary.csv` (`;`-delim,
@@ -77,7 +79,10 @@ Logic modules:
   the plan curve — `plannedKmAtTime` (where the plan expects you *now*), its inverse
   `plannedTimeAtKm` (when the plan expects you at a km) and `planFinish`. All three take
   **your** `startHour`/`endHour`; the ramp climbs only inside that window and sits flat at
-  camp overnight, so on-plan reads ~0 at any hour.
+  camp overnight, so on-plan reads ~0 at any hour. `realisedStops(stops, marks)` swaps each
+  day-end camp for the one you actually slept at (a mark on day *d+1* ended day *d*),
+  non-decreasing, plan-untouched when there are no marks — it anchors `poiArrival` so the
+  strip's per-day times run from real camps. The plan curve does **not** use it.
 
 Panels: **NOW** (km · section A–E · daylight) · **TODAY** (planned stop + ETA · huts
 passed · next hut if reachable ~2h past) · **ON-TIME** (vs Plan A in hours/days · buffer

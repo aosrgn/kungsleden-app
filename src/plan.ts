@@ -130,6 +130,29 @@ export function poiArrival(
   return { day: i + 1, clockHours: startHour + (km - segStartKm) / speedKmh }
 }
 
+export interface CampMark {
+  km: number
+  at: number // epoch ms
+}
+
+// Plan A's camps with each day's END camp replaced by where you ACTUALLY slept, wherever
+// a camp mark exists for the following morning (a mark taken on day d+1 IS the camp that
+// ended day d). Feeds the per-day POI crossing times, so each day is measured from the
+// real camp rather than the planned one — camp 1.5 km past the planned spot and the
+// whole day's clock shifts with you. Days you haven't reached keep their planned camp.
+// Forced non-decreasing: overshooting a later planned camp must not run a day backwards.
+export function realisedStops(stops: PlanStop[], marks: CampMark[]): PlanStop[] {
+  if (!marks.length) return stops
+  const byMorning = new Map<number, number>()
+  for (const m of marks) byMorning.set(startOfDay(new Date(m.at)).valueOf(), m.km)
+  let prev = 0
+  return stops.map((s) => {
+    const km = Math.max(prev, byMorning.get(addDays(s.date, 1).valueOf()) ?? s.km)
+    prev = km
+    return { ...s, km }
+  })
+}
+
 function sameLocalDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }

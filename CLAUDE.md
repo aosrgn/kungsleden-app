@@ -51,9 +51,23 @@ distance (next mark − this mark) and, for the open day, **km done so far** fro
 position — the running "how far today" read. Rows are numbered by **calendar date against
 the diary's day 1**, so a forgotten camp leaves a gap (D2, D4) instead of renumbering
 every day after it. Marks come from the real on-trail position, never the simulated km.
+Each row's **camp km is editable** (and removable) — you'll tap "Mark camp" an hour up the
+trail sooner or later, and the number has to be correctable after the fact.
 
 It used to drive `avgKmDay` → the finish projection; that coupling is what made a missed
-morning tap look like a scheduling problem. **Don't reconnect it.**
+morning tap look like a scheduling problem. **Don't reconnect it to the projection.**
+
+### Real camps anchor the day (`realisedStops` in `plan.ts`)
+A mark taken on the morning of day *d+1* IS the camp that ended day *d*, so `realisedStops`
+rewrites each planned day-end camp to where you actually slept, wherever a mark exists.
+That feeds `poiArrival`, so the day's crossing times run from the real camp: camping 1.5 km
+past the planned spot pulls the whole day's clock ~33 min earlier. Days not yet slept keep
+their planned camp; the sequence is forced non-decreasing so an overshoot can't run a day
+backwards; with no marks it returns the plan untouched. **`plannedKmAtTime` deliberately
+does NOT use this** — "vs Plan A" has to compare against Plan A.
+
+The route strip also renders each mark as a squared-off ⛺ pin (`Camp D4 · Aug 5`) with the
+same signed km-from-you label as every other node.
 
 ### Speed model (`useSpeed.ts` + `SpeedControl.vue`)
 **Start hour + end hour** (the daily walking window) and **km/day** (~25, Plan A's rate).
