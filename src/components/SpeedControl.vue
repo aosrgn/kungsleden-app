@@ -3,10 +3,10 @@ import { SPEED_RANGES } from '../composables/useSpeed'
 
 const startHour = defineModel<number>('startHour', { required: true })
 const endHour = defineModel<number>('endHour', { required: true })
-const seedKmDay = defineModel<number>('seedKmDay', { required: true })
+const kmDay = defineModel<number>('kmDay', { required: true })
 
-// Read-only feedback of the derived rates (computed in the parent from the day-log).
-defineProps<{ avgKmDay: number; madeGoodKmh: number }>()
+// Read-only feedback of the derived made-good speed (computed in the parent).
+defineProps<{ madeGoodKmh: number }>()
 
 function clamp(raw: string, min: number, max: number, fallback: number): number {
   const n = parseFloat(raw)
@@ -25,10 +25,10 @@ function onEnd(e: Event) {
   endHour.value = v
   el.value = String(v)
 }
-function onSeed(e: Event) {
+function onKmDay(e: Event) {
   const el = e.target as HTMLInputElement
-  const v = clamp(el.value, SPEED_RANGES.seedKmDay.min, SPEED_RANGES.seedKmDay.max, seedKmDay.value)
-  seedKmDay.value = v
+  const v = clamp(el.value, SPEED_RANGES.kmDay.min, SPEED_RANGES.kmDay.max, kmDay.value)
+  kmDay.value = v
   el.value = String(v)
 }
 </script>
@@ -47,12 +47,12 @@ function onSeed(e: Event) {
       </label>
     </div>
     <div class="row">
-      <span class="label">Avg</span>
+      <span class="label">Pace</span>
       <label class="fld">
-        <input :value="seedKmDay" type="number" step="1" min="5" max="60" inputmode="numeric" @change="onSeed" />
-        <span class="unit">km/day seed</span>
+        <input :value="kmDay" type="number" step="1" min="5" max="60" inputmode="numeric" @change="onKmDay" />
+        <span class="unit">km/day</span>
       </label>
-      <span class="readout">→ {{ avgKmDay.toFixed(1) }} km/day · {{ madeGoodKmh.toFixed(1) }} km/h</span>
+      <span class="readout">→ {{ madeGoodKmh.toFixed(1) }} km/h · ETAs only</span>
     </div>
   </section>
 </template>

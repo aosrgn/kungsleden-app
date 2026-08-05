@@ -54,8 +54,7 @@ Vue 3 + TS + Vite + `vite-plugin-pwa`. No map/tiles, no backend. Entry `src/main
 `App.vue` (renders `PlannerView` + `UpdatePrompt` + build badge).
 
 **`components/PlannerView.vue`** is the orchestrator: owns geolocation, the shared clock,
-speed inputs, the day-log, trip load, and the derived `positionKm`/`avgKmDay`/
-`madeGoodKmh`; feeds every panel.
+speed inputs, trip load, and the derived `positionKm`/`madeGoodKmh`; feeds every panel.
 
 Composables (`src/composables/`):
 - `useGeolocation.ts` — device position + the **iOS-18 3-strategy fallback**
@@ -64,7 +63,6 @@ Composables (`src/composables/`):
   Settings first if location fails.
 - `useNow.ts` — one shared minute clock (drives daylight, ETAs live).
 - `useSpeed.ts` — the speed inputs (see §4).
-- `useDayLog.ts` — persisted morning "marks" (`{km, at}`); also **feeds `avgKmDay`**.
 
 Logic modules:
 - `src/data/trip.ts` — `loadTrip()` fetches + parses `public/data/diary.csv` (`;`-delim,
@@ -73,26 +71,42 @@ Logic modules:
   haversine along the ~8.4k-pt line; a port of the diary builder so app-km == diary-km).
 - `src/daylight.ts` — sunrise/sunset (SunCalc-style, no deps); handles polar + pre-dawn.
 - `src/plan.ts` — Plan A schedule from the diary: `planStops`, `huts`, `stopForDay`,
-  `trekPhase`, `plannedKmAtTime` (where the plan expects you *now*, ramping only during
-  the 08:00–18:00 walking window so on-plan reads ~0 at any hour), `poiArrival` (planned
-  per-day POI clock time), `startOfDay`/`addDays`.
+  `trekPhase`, `poiArrival` (planned per-day POI clock time), `startOfDay`/`addDays`, and
+  the plan curve — `plannedKmAtTime` (where the plan expects you *now*), its inverse
+  `plannedTimeAtKm` (when the plan expects you at a km) and `planFinish`. All three take
+  **your** `startHour`/`endHour`; the ramp climbs only inside that window and sits flat at
+  camp overnight, so on-plan reads ~0 at any hour.
 
 Panels: **NOW** (km · section A–E · daylight) · **TODAY** (planned stop + ETA · huts
 passed · next hut if reachable ~2h past) · **ON-TIME** (vs Plan A in hours/days · buffer
-days · single projected Abisko finish, flagged "risks flight" on/after Aug 21) · **DAY
-LOG** (mark each morning → daily distances + total). Route strip shows every POI with its
-**planned per-day crossing time** (`D{n} HH:MM`, "long day" flag on late camp arrivals)
-plus a live `eta HH:MM`. Off-trail fixes (offset > 2 km) pause the planner and disable
-"Mark day start" so the day log can't be polluted.
+days · projected Abisko finish, flagged "risks flight" under half a day of buffer). Route
+strip shows every POI with its **planned per-day crossing time** (`D{n} HH:MM`, "long day"
+flag on late camp arrivals) plus a live `eta HH:MM`. Off-trail fixes (offset > 2 km) pause
+the planner.
 
-## 4. The speed model (final — after several iterations)
-There is **no km/h "pace" input** (removed). Inputs (`SpeedControl.vue`, persisted):
-**start hour** (8), **end hour** (18), **seed km/day** (25 = Plan A's rate).
-- `avgKmDay = (seedKmDay + Σ completed logged days) / (1 + completedDays)` — the seed is
-  one "day −1" prior; real logged days (mark-to-mark) average in and outweigh it.
-- `madeGoodKmh = avgKmDay ÷ (end − start)` (breaks included) → drives POI times + ETAs.
-- `avgKmDay` → finish/buffer. `buffer = (deadline − projectedFinish) / day`, responds to
-  the speed. **vs Plan A** = (your km − plan's km now) ÷ madeGoodKmh, as concrete hours.
+## 4. The finish projection + speed model (rebuilt on trek day 4)
+**The projection needs only position + date.** `ratio = positionKm ÷ plannedKmAtTime(now)`;
+`finish = now + (planFinish − plannedTimeAtKm(positionKm)) ÷ ratio`; `buffer = deadline −
+finish`. Ease-in cancels because both sides of the ratio span the same days. Ratio clamped
+0.4–2.5; noisy for the first 2–3 days (small denominator), settles from ~day 4.
+
+**Why the old model was replaced** (it was live for the first three trek days): it did
+`remaining ÷ avgKmDay`, where `avgKmDay` came from morning "mark day start" taps. Plan A
+ramps — 7/18/21 km on days 1–3, ~27 km/day after — so the measured average was ~21 km/day
+during the ease-in and got extrapolated across the steep remainder. On Aug 5 at km 47.5
+(1.5 km **ahead** of plan) it read *finish Aug 24, buffer −2.5 days, risks flight*. Walking
+Plan A perfectly produced the same verdict — the panel could not read anything else during
+week one. Verified: plan-exact days gave buffers of −9.5 → +2.5 over the trip; the ratio
+model holds ~1.0 throughout. **The day log and `useDayLog.ts` are deleted** — the user kept
+forgetting to mark, and nothing consumes marks any more.
+
+Speed inputs (`SpeedControl.vue`, persisted; `seedKmDay` is migration-read as `kmDay`):
+**start hour** (8), **end hour** (18), **km/day** (25 = Plan A's rate).
+- `madeGoodKmh = kmDay ÷ (end − start)` (breaks included) → drives POI times + ETAs
+  **only**; the projection never touches it.
+- **vs Plan A** = (your km − plan's km now) ÷ madeGoodKmh, as concrete hours. `plan.ts`
+  used to hardcode an 08:00 ramp start regardless of the window, which invented ~1.2 h of
+  phantom deficit each morning for a 09:00 start; it now uses the real window.
 - POI planned time = `startHour + (poiKm − dayStartCampKm) / madeGoodKmh`, per segment
   camp[i]→camp[i+1] (day 1 from km 0). Caveat: applies walking speed to the whole segment,
   so the boat/bus transfer day (Day 14) reads late ("past 24:00") — a known limitation.
@@ -139,9 +153,13 @@ are placed on the boarding banks; details in the 2026-07-31 handoff.
 - `display: standalone` (a `browser`-mode experiment was reverted; geolocation issue was a
   device setting, not display mode).
 - ON-TIME "vs Plan A": iterated from ½-day (artifact) → 18:00-anchored → **walking-window
-  `plannedKmAtTime`** so on-plan reads ~0 all day. Buffer is **pace/avg-driven**.
-- Speed model: replaced pace-km/h + hours/day with **start/end window + measured avg
-  km/day** (seed 25). Multi-pace finish table → single projected finish.
+  `plannedKmAtTime`** so on-plan reads ~0 all day.
+- Speed model: pace-km/h + hours/day → start/end window + measured avg km/day (seed 25) →
+  **start/end window + a plain km/day, ETAs only**. Multi-pace finish table → single
+  projected finish.
+- Finish/buffer: measured-average extrapolation → **plan-relative ratio** (§4). The day log
+  went with it. Don't reintroduce a km/day-driven projection — Plan A's ease-in guarantees
+  it reads "risks flight" for the first week no matter how fast you walk.
 - Diary Serve/Aigert day-notes fixed (Serve is passed Day 4, not Day 3).
 
 ## 7. Open / time-sensitive

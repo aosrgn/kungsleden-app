@@ -26,21 +26,31 @@ the device position projected onto the trail line.
   is 2-D and the diary has none, so elevation is dropped everywhere.)
 - **TODAY** — planned stop + ETA · huts passed before the planned stop · next hut if
   reachable ~2 h past the stop.
-- **ON-TIME** — vs Plan A as concrete hours/days (camps anchored at 18:00; plan position
-  ramps only during the walking window, so being on-plan reads ~0 at any hour) · buffer
-  days left · single projected Abisko finish (on/after Aug 21 flagged "risks flight").
-- **DAY LOG** — a "Mark day start" button logs the trail km each morning; shows each
-  day's distance (next mark − this mark; the last runs to your current position). Also
-  **feeds the measured average km/day** below, so marking is load-bearing for projections.
+- **ON-TIME** — vs Plan A as concrete hours/days (camps anchored at the end hour; plan
+  position ramps only during the walking window, so being on-plan reads ~0 at any hour) ·
+  buffer days left · single projected Abisko finish (flagged "risks flight" when the
+  buffer drops under half a day, so flag and number can never disagree).
+
+### The finish projection is plan-relative (`plan.ts` + `OnTimePanel.vue`)
+Only two inputs: **current position** and **current date**, matched against Plan A.
+`ratio = your km ÷ plannedKmAtTime(now)`, then `finish = now + (plan time still owed from
+your km) ÷ ratio`. Because both sides of the ratio span the same days, **Plan A's ease-in
+cancels out** — the plan does 7/18/21 km on days 1–3 and ~27 thereafter, so anything that
+extrapolates a measured km/day reads those short days as "slow" and predicts a missed
+flight while you are in fact ahead. That was the old day-log model's fatal flaw. The ratio
+is clamped to 0.4–2.5, and it is unreliable for the first 2–3 days (small denominator) —
+it settles from roughly day 4.
+
+There is **no day log and no "mark day start"** — deleted, along with the measured
+km/day. Nothing needs to be remembered each morning.
 
 ### Speed model (`useSpeed.ts` + `SpeedControl.vue`)
-Unified: **start hour + end hour** (daily walking window) and a **seed km/day** (~25,
-Plan A's rate). `avgKmDay` is measured from the day-log — the seed as one "day −1" prior
-plus every completed day, so real days progressively outweigh it. `madeGoodKmh =
-avgKmDay ÷ (end − start)` (breaks included) drives POI times and ETAs; `avgKmDay` drives
-the finish/buffer. There is **no km/h "pace" input** — it was replaced by this. All three
-inputs persist to localStorage. Off-trail fixes (offset > 2 km) don't drive the planner
-or the day log.
+**Start hour + end hour** (the daily walking window) and **km/day** (~25, Plan A's rate).
+`madeGoodKmh = kmDay ÷ (end − start)` (breaks included) drives POI crossing times and
+ETAs **only** — never the finish projection, so a stale pace guess can't distort it. The
+window is also what the Plan A ramp uses: a hardcoded 08:00 while you actually leave at
+09:00 invents an hour of deficit every morning. All three inputs persist to localStorage.
+Off-trail fixes (offset > 2 km) don't drive the planner.
 
 ### Explicitly cut (no v2 — the app is disposable after the trek)
 Map/tiles, full DP planner, day-card scoring, drag-to-reshuffle, diff display, food
@@ -105,8 +115,10 @@ Built: geolocation composable, map removed, data bundled + loaded, manual Update
 + precache; position → km projection (`src/trail.ts`); position-anchored route strip with
 per-day planned crossing times + live ETAs; panels NOW (km · section · daylight), TODAY
 (stop ETA · huts), ON-TIME (vs Plan A · buffer · single projected finish); the unified
-speed model (start/end window + measured avg km/day, no km/h pace); DAY LOG (daily
-distances, feeds avgKmDay). All the planned functionality is in place.
+speed model (start/end window + km/day, no km/h pace). Day 4 of the trek: the day log was
+deleted and the finish projection rebuilt plan-relative, because extrapolating a measured
+km/day across Plan A's ease-in predicted a missed flight while running ahead of schedule.
+All the planned functionality is in place.
 
 ## Style
 Senior TS/Vue/Node dev. Terse. No trailing summaries. Lists over prose. Verify claims

@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { DiaryRow } from '../data/trip'
-import { planStops, plannedKmAtTime, startOfDay, addDays } from '../plan'
+import { planStops, plannedKmAtTime, plannedTimeAtKm, planFinish } from '../plan'
 
 const props = defineProps<{
   diary: DiaryRow[]
   positionKm: number | null
   totalKm: number
   now: Date
-  avgKmDay: number
+  startHour: number
+  endHour: number
   madeGoodKmh: number
 }>()
 
@@ -16,33 +17,47 @@ const props = defineProps<{
 // allowing for the Abisko→airport transfer. One deadline drives both buffer and the
 // finish flag so they can't disagree.
 const DEADLINE = new Date(2026, 7, 21, 12)
-// A projected finish on/after Aug 21 is flagged: too tight for the midday-arrival
-// transfer even though the flight itself is that evening.
-const LATEST_SAFE_FINISH = addDays(startOfDay(DEADLINE), -1)
 const DAY_MS = 86400000
 
 const stops = computed(() => planStops(props.diary))
 const finished = computed(() => props.positionKm != null && props.positionKm >= props.totalKm)
 
-// Projected Abisko finish from your measured average km/day. Day-granular (assumes a
-// full walking day available regardless of the hour it's checked).
-const projectedFinish = computed(() => {
-  if (props.positionKm == null || props.avgKmDay <= 0) return null
-  const remaining = Math.max(0, props.totalKm - props.positionKm)
-  const daysLeft = remaining / props.avgKmDay
-  return addDays(startOfDay(props.now), Math.max(0, Math.ceil(daysLeft) - 1))
-})
-const risky = computed(
-  () => projectedFinish.value != null && projectedFinish.value.valueOf() > LATEST_SAFE_FINISH.valueOf(),
+const plannedNow = computed(() =>
+  props.positionKm == null || !stops.value.length
+    ? null
+    : plannedKmAtTime(stops.value, props.now, props.startHour, props.endHour),
 )
+
+// How your progress compares to Plan A's, as a plain ratio of distance covered. Because
+// both sides span the same days, the plan's deliberate ease-in (7 km on day 1, 18 on
+// day 2) cancels out — projecting a measured km/day instead read those short days as
+// "slow" and swore you'd miss the flight while you were in fact ahead.
+// Clamped: a few km either way on day 1 would otherwise imply an absurd trip-wide rate.
+const RATIO_RANGE = { min: 0.4, max: 2.5 }
+const ratio = computed(() => {
+  const planned = plannedNow.value
+  if (planned == null || props.positionKm == null) return null
+  if (planned <= 1) return 1 // pre-trek / first km — nothing meaningful to compare yet
+  return Math.min(RATIO_RANGE.max, Math.max(RATIO_RANGE.min, props.positionKm / planned))
+})
+
+// Projected Abisko finish: the plan-time still owed from where you actually are, walked
+// at your demonstrated share of the plan's pace.
+const projectedFinish = computed(() => {
+  const r = ratio.value
+  if (r == null || props.positionKm == null || !stops.value.length) return null
+  const owedFrom = plannedTimeAtKm(stops.value, props.positionKm, props.startHour, props.endHour)
+  const end = planFinish(stops.value, props.startHour, props.endHour)
+  if (owedFrom == null || end == null) return null
+  const remainingPlanMs = Math.max(0, end.valueOf() - owedFrom.valueOf())
+  return new Date(props.now.valueOf() + remainingPlanMs / r)
+})
 
 // + = ahead of Plan A: how many km past where the plan expects you right now (which
 // ramps only during the day's walking window, so being at camp in the morning reads 0).
-const kmDelta = computed(() => {
-  if (props.positionKm == null || !stops.value.length) return null
-  const planned = plannedKmAtTime(stops.value, props.now)
-  return planned == null ? null : props.positionKm - planned
-})
+const kmDelta = computed(() =>
+  plannedNow.value == null || props.positionKm == null ? null : props.positionKm - plannedNow.value,
+)
 
 // Express the km gap as walking time at your made-good speed — a concrete "you're N
 // hours ahead/behind" rather than an abstract ratio.
@@ -67,6 +82,8 @@ const bufferDays = computed(() => {
   const finish = projectedFinish.value
   return finish == null ? null : Math.round(((DEADLINE.valueOf() - finish.valueOf()) / DAY_MS) * 10) / 10
 })
+// Flagged off the same number the buffer shows, so the two can never disagree.
+const risky = computed(() => bufferDays.value != null && bufferDays.value < 0.5)
 
 const dayLabel = (d: Date) => d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
 </script>

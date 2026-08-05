@@ -30,26 +30,38 @@ export function addDays(d: Date, n: number): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
 }
 
-// The plan's daily walking window: you sit at the previous camp overnight, then walk
-// from WALK_START to WALK_END. Anchoring camp arrival at 18:00 (not midnight) and
-// modeling the overnight as stationary is what keeps "where should I be now" correct
-// in the morning, not just at the evening camp.
-const WALK_START_MS = 8 * 3600 * 1000
-const ARRIVAL_MS = 18 * 3600 * 1000
+const HOUR_MS = 3600 * 1000
+
+// The plan's timeline as (time, km) points: you sit at the previous camp overnight, then
+// walk the day's ground between startHour and endHour. Modeling the overnight as
+// stationary is what keeps "where should I be now" correct in the morning, not just at
+// the evening camp. The window is YOUR window (from the speed control) — using a fixed
+// 08:00 while you actually leave at 09:00 invents an hour of deficit every morning.
+function planCurve(stops: PlanStop[], startHour: number, endHour: number) {
+  const startMs = startHour * HOUR_MS
+  const arrivalMs = Math.max(startHour + 1, endHour) * HOUR_MS
+  const pts: { t: number; km: number }[] = [{ t: stops[0].date.valueOf() + startMs, km: 0 }]
+  for (let i = 0; i < stops.length; i++) {
+    pts.push({ t: stops[i].date.valueOf() + arrivalMs, km: stops[i].km }) // camp reached
+    if (i < stops.length - 1) {
+      pts.push({ t: stops[i + 1].date.valueOf() + startMs, km: stops[i].km }) // still at camp next morning
+    }
+  }
+  return pts
+}
 
 // Where Plan A expects you to be (km) at a given moment: 0 at the first day's start,
 // climbing only during each day's walking window and flat overnight at each camp,
 // clamped to the finish. Comparing this to your actual km gives an artifact-free
 // ahead/behind at any time of day.
-export function plannedKmAtTime(stops: PlanStop[], now: Date): number | null {
+export function plannedKmAtTime(
+  stops: PlanStop[],
+  now: Date,
+  startHour: number,
+  endHour: number,
+): number | null {
   if (!stops.length) return null
-  const pts: { t: number; km: number }[] = [{ t: stops[0].date.valueOf() + WALK_START_MS, km: 0 }]
-  for (let i = 0; i < stops.length; i++) {
-    pts.push({ t: stops[i].date.valueOf() + ARRIVAL_MS, km: stops[i].km }) // camp reached (18:00)
-    if (i < stops.length - 1) {
-      pts.push({ t: stops[i + 1].date.valueOf() + WALK_START_MS, km: stops[i].km }) // still at camp next morning
-    }
-  }
+  const pts = planCurve(stops, startHour, endHour)
   const t = now.valueOf()
   if (t <= pts[0].t) return pts[0].km
   const last = pts[pts.length - 1]
@@ -62,6 +74,38 @@ export function plannedKmAtTime(stops: PlanStop[], now: Date): number | null {
     }
   }
   return last.km
+}
+
+// The inverse: when Plan A expects you to reach a given km. Read against your actual km
+// it says how far ahead/behind the plan you are *in time*, which is what the finish
+// projection needs — the plan's own ramp (7 km on day 1, 29 on day 7) then cancels out
+// instead of being mistaken for your pace.
+export function plannedTimeAtKm(
+  stops: PlanStop[],
+  km: number,
+  startHour: number,
+  endHour: number,
+): Date | null {
+  if (!stops.length) return null
+  const pts = planCurve(stops, startHour, endHour)
+  if (km <= pts[0].km) return new Date(pts[0].t)
+  const last = pts[pts.length - 1]
+  if (km >= last.km) return new Date(last.t)
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1]
+    const b = pts[i]
+    if (km <= b.km && b.km > a.km) {
+      return new Date(a.t + ((km - a.km) / (b.km - a.km)) * (b.t - a.t))
+    }
+  }
+  return new Date(last.t)
+}
+
+// The moment Plan A has you finishing (last camp, at the day's end hour).
+export function planFinish(stops: PlanStop[], startHour: number, endHour: number): Date | null {
+  if (!stops.length) return null
+  const pts = planCurve(stops, startHour, endHour)
+  return new Date(pts[pts.length - 1].t)
 }
 
 export interface PoiArrival {

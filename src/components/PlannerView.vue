@@ -3,41 +3,23 @@ import { computed, onMounted, ref } from 'vue'
 import { useGeolocation } from '../composables/useGeolocation'
 import { useNow } from '../composables/useNow'
 import { useSpeed } from '../composables/useSpeed'
-import { useDayLog } from '../composables/useDayLog'
 import { loadTrip, type Trip } from '../data/trip'
 import { createTrailIndex } from '../trail'
 import NowPanel from './NowPanel.vue'
 import TodayPanel from './TodayPanel.vue'
 import OnTimePanel from './OnTimePanel.vue'
-import DayLogPanel from './DayLogPanel.vue'
 import SpeedControl from './SpeedControl.vue'
 import RouteStrip from './RouteStrip.vue'
 import GpxExport from './GpxExport.vue'
 
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
 const now = useNow()
-const { startHour, endHour, seedKmDay } = useSpeed()
-const { marks, mark, undo } = useDayLog()
+const { startHour, endHour, kmDay } = useSpeed()
 
-function markDayStart() {
-  // Marks from the REAL on-trail position only — never the simulated km (§ below).
-  if (realPositionKm.value != null) mark(realPositionKm.value, now.value.valueOf())
-}
-
-// Measured average daily distance: the seed as one "day -1" prior plus every completed
-// day from the log (mark to mark), so real days progressively outweigh the seed.
-const avgKmDay = computed(() => {
-  const ms = marks.value
-  let sum = 0
-  let days = 0
-  for (let i = 1; i < ms.length; i++) {
-    sum += Math.max(0, ms[i].km - ms[i - 1].km)
-    days++
-  }
-  return (seedKmDay.value + sum) / (1 + days)
-})
-// Made-good speed (breaks included) = average distance spread over the daily window.
-const madeGoodKmh = computed(() => avgKmDay.value / Math.max(1, endHour.value - startHour.value))
+// Made-good speed (breaks included) = the day's distance spread over the walking window.
+// Drives ETAs and the POI crossing times only — the finish projection is plan-relative
+// (see OnTimePanel) and needs no pace input at all.
+const madeGoodKmh = computed(() => kmDay.value / Math.max(1, endHour.value - startHour.value))
 
 const trip = ref<Trip | null>(null)
 const dataError = ref<string>('')
@@ -55,11 +37,10 @@ const position = computed(() =>
     ? trailIndex.value.project(coords.value.lat, coords.value.lng)
     : null,
 )
-// A fix far from the trail line (e.g. testing at home) shouldn't drive the planner or
-// pollute the day log — only treat the position as on-route within this offset.
+// A fix far from the trail line (e.g. testing at home) shouldn't drive the planner —
+// only treat the position as on-route within this offset.
 const OFF_TRAIL_KM = 2
 const onTrail = computed(() => position.value != null && position.value.offsetKm <= OFF_TRAIL_KM)
-// The real on-route km — drives the day log (mark button) so a simulated km can't pollute it.
 const realPositionKm = computed(() => (onTrail.value ? position.value!.km : null))
 
 // Test/preview override: type a km to exercise the planner off-trail (before the trek).
@@ -133,24 +114,16 @@ const statusLabel: Record<typeof status.value, string> = {
       :position-km="positionKm"
       :total-km="trailIndex?.totalKm ?? 0"
       :now="now"
-      :avg-km-day="avgKmDay"
+      :start-hour="startHour"
+      :end-hour="endHour"
       :made-good-kmh="madeGoodKmh"
       class="ontime-panel"
-    />
-    <DayLogPanel
-      v-if="trip"
-      :marks="marks"
-      :position-km="realPositionKm"
-      class="daylog-panel"
-      @mark="markDayStart"
-      @undo="undo"
     />
     <SpeedControl
       v-if="trip"
       v-model:start-hour="startHour"
       v-model:end-hour="endHour"
-      v-model:seed-km-day="seedKmDay"
-      :avg-km-day="avgKmDay"
+      v-model:km-day="kmDay"
       :made-good-kmh="madeGoodKmh"
       class="speed-control"
     />
@@ -216,7 +189,6 @@ const statusLabel: Record<typeof status.value, string> = {
 .now-panel { margin-top: 1rem; }
 .today-panel { margin-top: 0.6rem; }
 .ontime-panel { margin-top: 0.6rem; }
-.daylog-panel { margin-top: 0.6rem; }
 .speed-control { margin-top: 0.6rem; }
 .gpx-export { margin-top: 0.6rem; }
 .route { margin-top: 1rem; }
