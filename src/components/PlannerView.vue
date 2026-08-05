@@ -50,14 +50,28 @@ const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(
 
 // The diary knows when the trek starts; the log only learns it once the trip has loaded.
 watch(trekStart, (d) => d && ensureTrailhead(d), { immediate: true })
+const monthDay = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+
+// Camps for the route strip. A mark made on the morning of day d is the camp that ENDED
+// day d−1, so it's named for that night — landing it right beside the diary's planned camp
+// for the same night instead of a day out of step. Each carries the distance walked to
+// reach it: the gap back to the previous mark (or the trailhead, for the first camp).
+// The km-0 trailhead mark itself isn't a camp and gets no pin — Hemavan already sits there.
 const campPins = computed(() =>
-  marks.value.map((m) => {
+  marks.value.flatMap((m, i) => {
     const at = new Date(m.at)
-    const day = trekStart.value
-      ? Math.max(1, Math.round((midnight(at) - midnight(trekStart.value)) / DAY_MS) + 1)
+    const started = trekStart.value
+      ? Math.round((midnight(at) - midnight(trekStart.value)) / DAY_MS) + 1
       : 1
-    const date = at.toLocaleDateString([], { month: 'short', day: 'numeric' })
-    return { km: m.km, day, label: `Camp D${day} · ${date}` }
+    const night = started - 1
+    if (night < 1) return []
+    const eve = new Date(midnight(at) - DAY_MS)
+    const span =
+      eve.getMonth() === at.getMonth()
+        ? `${monthDay(eve)}→${at.getDate()}`
+        : `${monthDay(eve)}→${monthDay(at)}`
+    const walked = Math.max(0, m.km - (i > 0 ? marks.value[i - 1].km : 0))
+    return [{ km: m.km, label: `Camp D${night} · ${span}`, note: `${walked.toFixed(1)} km walked` }]
   }),
 )
 const position = computed(() =>

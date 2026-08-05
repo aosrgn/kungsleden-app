@@ -70,8 +70,14 @@ their planned camp; the sequence is forced non-decreasing so an overshoot can't 
 backwards; with no marks it returns the plan untouched. **`plannedKmAtTime` deliberately
 does NOT use this** — "vs Plan A" has to compare against Plan A.
 
-The route strip also renders each mark as a squared-off ⛺ pin (`Camp D4 · Aug 5`) with the
-same signed km-from-you label as every other node.
+The route strip renders each mark as a squared-off ⛺ pin with the same signed km-from-you
+label as every other node. Pins are named for the **night they ended**, not the day they
+start — a mark made the morning of day *d* closed day *d−1* — so `⛺ Camp D1 · Aug 2→3`
+lands beside the diary's `🌙 Camp Day 1` for that same night, planned against actual. Each
+carries the distance walked to reach it (gap back to the previous mark, or the trailhead).
+The km-0 trailhead mark gets no pin: it isn't a camp, and Hemavan already sits at km 0.
+Note the day log numbers the *same* mark by the day it **starts** (D2 for Aug 3) — that row
+measures Aug 3's distance, so both numbers are right for what they label.
 
 ### Speed model (`useSpeed.ts` + `SpeedControl.vue`)
 **Start hour + end hour** (the daily walking window) and **km/day** (~25, Plan A's rate).

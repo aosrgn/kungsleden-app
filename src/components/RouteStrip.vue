@@ -5,7 +5,7 @@ import { planStops, poiArrival, realisedStops, type PoiArrival, type CampMark } 
 
 const props = defineProps<{
   rows: DiaryRow[]
-  camps?: { km: number; day: number; label: string }[]
+  camps?: { km: number; label: string; note: string }[]
   positionKm?: number | null
   now?: Date | null
   speedKmh?: number | null
@@ -41,7 +41,7 @@ const campRows = computed<DiaryRow[]>(() =>
     hiked: null,
     notHiked: null,
     total: null,
-    notes: '',
+    notes: c.note,
   })),
 )
 
