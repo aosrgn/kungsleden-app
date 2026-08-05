@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useGeolocation } from '../composables/useGeolocation'
 import { useNow } from '../composables/useNow'
 import { useSpeed } from '../composables/useSpeed'
@@ -18,7 +18,7 @@ import GpxExport from './GpxExport.vue'
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
 const now = useNow()
 const { startHour, endHour, kmDay } = useSpeed()
-const { marks, mark, setKm, remove, undo } = useDayLog()
+const { marks, mark, setKm, remove, undo, ensureTrailhead } = useDayLog()
 
 function markCamp() {
   // Marks from the REAL on-trail position only — never the simulated km (§ below).
@@ -47,6 +47,9 @@ const trekStart = computed(() => (trip.value ? (planStops(trip.value.diary)[0]?.
 
 const DAY_MS = 86400000
 const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).valueOf()
+
+// The diary knows when the trek starts; the log only learns it once the trip has loaded.
+watch(trekStart, (d) => d && ensureTrailhead(d), { immediate: true })
 const campPins = computed(() =>
   marks.value.map((m) => {
     const at = new Date(m.at)

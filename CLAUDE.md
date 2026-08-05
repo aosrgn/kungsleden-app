@@ -52,7 +52,11 @@ position — the running "how far today" read. Rows are numbered by **calendar d
 the diary's day 1**, so a forgotten camp leaves a gap (D2, D4) instead of renumbering
 every day after it. Marks come from the real on-trail position, never the simulated km.
 Each row's **camp km is editable** (and removable) — you'll tap "Mark camp" an hour up the
-trail sooner or later, and the number has to be correctable after the fact.
+trail sooner or later, and the number has to be correctable after the fact. Day 1 leaves
+the trailhead on an afternoon start, so it's easy to reach camp without ever opening the
+app: `ensureTrailhead` backfills a km-0 row on the diary's start date if the log begins
+later. Offered once (flag `kungsleden.daylog.trailhead`), matched by calendar day so an
+evening day-1 mark doesn't get a duplicate, and deleting it sticks.
 
 It used to drive `avgKmDay` → the finish projection; that coupling is what made a missed
 morning tap look like a scheduling problem. **Don't reconnect it to the projection.**

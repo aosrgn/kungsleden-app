@@ -37,6 +37,12 @@ function load(): DayMark[] {
   }
 }
 
+// Set once the trailhead mark has been offered, so deleting that row makes it stay gone
+// instead of reappearing on every reload.
+const D1_KEY = 'kungsleden.daylog.trailhead'
+
+const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).valueOf()
+
 export function useDayLog() {
   const marks = ref<DayMark[]>(load())
 
@@ -69,9 +75,28 @@ export function useDayLog() {
   function undo() {
     marks.value.pop()
   }
+
+  // Day 1 leaves the trailhead at km 0, but it's an afternoon start — easy to reach camp
+  // without ever having opened the app, leaving the log to begin at D2. Backfill that one
+  // row (from the diary's own start date, not a guess) so day one's distance is counted
+  // and the numbering starts where the trek does. Offered once; it's editable like any
+  // other camp, and deleting it sticks.
+  function ensureTrailhead(dayStart: Date) {
+    if (localStorage.getItem(D1_KEY)) return
+    try {
+      localStorage.setItem(D1_KEY, '1')
+    } catch {
+      // storage disabled — worst case this is offered again next load
+    }
+    // Day-level comparison: a mark made on day 1 counts whatever the hour, so an evening
+    // start doesn't get a duplicate row stacked above it.
+    const day1 = midnight(dayStart)
+    if (marks.value.some((m) => midnight(new Date(m.at)) <= day1)) return
+    mark(0, day1 + 43200000) // midday, so the row's date is unambiguous in any timezone
+  }
   function clear() {
     marks.value = []
   }
 
-  return { marks, mark, setKm, remove, undo, clear }
+  return { marks, mark, setKm, remove, undo, clear, ensureTrailhead }
 }
