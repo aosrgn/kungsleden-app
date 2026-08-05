@@ -63,6 +63,8 @@ Composables (`src/composables/`):
   Settings first if location fails.
 - `useNow.ts` — one shared minute clock (drives daylight, ETAs live).
 - `useSpeed.ts` — the speed inputs (see §4).
+- `useDayLog.ts` — persisted camp marks (`{km, at}`). **Journal only — feeds no
+  projection** (§4). Seeds the trek's days 1–4 if the stored log is empty.
 
 Logic modules:
 - `src/data/trip.ts` — `loadTrip()` fetches + parses `public/data/diary.csv` (`;`-delim,
@@ -79,10 +81,11 @@ Logic modules:
 
 Panels: **NOW** (km · section A–E · daylight) · **TODAY** (planned stop + ETA · huts
 passed · next hut if reachable ~2h past) · **ON-TIME** (vs Plan A in hours/days · buffer
-days · projected Abisko finish, flagged "risks flight" under half a day of buffer). Route
-strip shows every POI with its **planned per-day crossing time** (`D{n} HH:MM`, "long day"
-flag on late camp arrivals) plus a live `eta HH:MM`. Off-trail fixes (offset > 2 km) pause
-the planner.
+days · projected Abisko finish, flagged "risks flight" under half a day of buffer) · **DAY
+LOG** (camp marks → per-day distances + km so far today; journal only). Route strip shows
+every POI with its **planned per-day crossing time** (`D{n} HH:MM`, "long day" flag on late
+camp arrivals) plus a live `eta HH:MM`. Off-trail fixes (offset > 2 km) pause the planner
+and disable "Mark camp" so the log can't take a simulated km.
 
 ## 4. The finish projection + speed model (rebuilt on trek day 4)
 **The projection needs only position + date.** `ratio = positionKm ÷ plannedKmAtTime(now)`;
@@ -97,8 +100,16 @@ during the ease-in and got extrapolated across the steep remainder. On Aug 5 at 
 (1.5 km **ahead** of plan) it read *finish Aug 24, buffer −2.5 days, risks flight*. Walking
 Plan A perfectly produced the same verdict — the panel could not read anything else during
 week one. Verified: plan-exact days gave buffers of −9.5 → +2.5 over the trip; the ratio
-model holds ~1.0 throughout. **The day log and `useDayLog.ts` are deleted** — the user kept
-forgetting to mark, and nothing consumes marks any more.
+model holds ~1.0 throughout.
+
+**The day log stays, decoupled.** It was briefly deleted with the old model and restored
+the same day: the user reads "km done so far today" off it constantly and wants the camp
+history. It is now a pure journal — no projection reads it, so a missed tap costs history
+and nothing else. Rows number by calendar date vs the diary's day 1 (a forgotten camp
+leaves a gap, rather than renumbering the rest). localStorage key `kungsleden.daylog`
+survived the deletion untouched — only the code had gone — and `useDayLog.ts` carries a
+seed of the trek's first four marks (km 0 · 8.4 · 25.1 · 47.5) used **only** on an empty
+log, reconstructed from the on-screen running totals.
 
 Speed inputs (`SpeedControl.vue`, persisted; `seedKmDay` is migration-read as `kmDay`):
 **start hour** (8), **end hour** (18), **km/day** (25 = Plan A's rate).
@@ -157,9 +168,11 @@ are placed on the boarding banks; details in the 2026-07-31 handoff.
 - Speed model: pace-km/h + hours/day → start/end window + measured avg km/day (seed 25) →
   **start/end window + a plain km/day, ETAs only**. Multi-pace finish table → single
   projected finish.
-- Finish/buffer: measured-average extrapolation → **plan-relative ratio** (§4). The day log
-  went with it. Don't reintroduce a km/day-driven projection — Plan A's ease-in guarantees
-  it reads "risks flight" for the first week no matter how fast you walk.
+- Finish/buffer: measured-average extrapolation → **plan-relative ratio** (§4). Don't
+  reintroduce a km/day-driven projection — Plan A's ease-in guarantees it reads "risks
+  flight" for the first week no matter how fast you walk.
+- Day log: kept as a **journal**, decoupled from the projection. Deleting it outright was
+  a step too far — it's the user's live "km done today". Don't wire it back into any math.
 - Diary Serve/Aigert day-notes fixed (Serve is passed Day 4, not Day 3).
 
 ## 7. Open / time-sensitive

@@ -3,18 +3,27 @@ import { computed, onMounted, ref } from 'vue'
 import { useGeolocation } from '../composables/useGeolocation'
 import { useNow } from '../composables/useNow'
 import { useSpeed } from '../composables/useSpeed'
+import { useDayLog } from '../composables/useDayLog'
 import { loadTrip, type Trip } from '../data/trip'
+import { planStops } from '../plan'
 import { createTrailIndex } from '../trail'
 import NowPanel from './NowPanel.vue'
 import TodayPanel from './TodayPanel.vue'
 import OnTimePanel from './OnTimePanel.vue'
 import SpeedControl from './SpeedControl.vue'
 import RouteStrip from './RouteStrip.vue'
+import DayLogPanel from './DayLogPanel.vue'
 import GpxExport from './GpxExport.vue'
 
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
 const now = useNow()
 const { startHour, endHour, kmDay } = useSpeed()
+const { marks, mark, undo } = useDayLog()
+
+function markCamp() {
+  // Marks from the REAL on-trail position only — never the simulated km (§ below).
+  if (realPositionKm.value != null) mark(realPositionKm.value, now.value.valueOf())
+}
 
 // Made-good speed (breaks included) = the day's distance spread over the walking window.
 // Drives ETAs and the POI crossing times only — the finish projection is plan-relative
@@ -32,6 +41,8 @@ onMounted(async () => {
 })
 
 const trailIndex = computed(() => (trip.value ? createTrailIndex(trip.value.trail) : null))
+// Day 1 of the trek, from the diary — the day log numbers rows against it.
+const trekStart = computed(() => (trip.value ? (planStops(trip.value.diary)[0]?.date ?? null) : null))
 const position = computed(() =>
   trailIndex.value && coords.value
     ? trailIndex.value.project(coords.value.lat, coords.value.lng)
@@ -119,6 +130,15 @@ const statusLabel: Record<typeof status.value, string> = {
       :made-good-kmh="madeGoodKmh"
       class="ontime-panel"
     />
+    <DayLogPanel
+      v-if="trip"
+      :marks="marks"
+      :position-km="realPositionKm"
+      :trek-start="trekStart"
+      class="daylog-panel"
+      @mark="markCamp"
+      @undo="undo"
+    />
     <SpeedControl
       v-if="trip"
       v-model:start-hour="startHour"
@@ -189,6 +209,7 @@ const statusLabel: Record<typeof status.value, string> = {
 .now-panel { margin-top: 1rem; }
 .today-panel { margin-top: 0.6rem; }
 .ontime-panel { margin-top: 0.6rem; }
+.daylog-panel { margin-top: 0.6rem; }
 .speed-control { margin-top: 0.6rem; }
 .gpx-export { margin-top: 0.6rem; }
 .route { margin-top: 1rem; }

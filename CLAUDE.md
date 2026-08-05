@@ -30,6 +30,7 @@ the device position projected onto the trail line.
   position ramps only during the walking window, so being on-plan reads ~0 at any hour) ·
   buffer days left · single projected Abisko finish (flagged "risks flight" when the
   buffer drops under half a day, so flag and number can never disagree).
+- **DAY LOG** — camp marks: per-day distances + km done so far today. History only.
 
 ### The finish projection is plan-relative (`plan.ts` + `OnTimePanel.vue`)
 Only two inputs: **current position** and **current date**, matched against Plan A.
@@ -41,8 +42,18 @@ flight while you are in fact ahead. That was the old day-log model's fatal flaw.
 is clamped to 0.4–2.5, and it is unreliable for the first 2–3 days (small denominator) —
 it settles from roughly day 4.
 
-There is **no day log and no "mark day start"** — deleted, along with the measured
-km/day. Nothing needs to be remembered each morning.
+The **day log feeds none of this** — see below. Nothing you forget to tap can make the
+projection wrong.
+
+### Day log (`useDayLog.ts` + `DayLogPanel.vue`) — a journal, not an input
+"Mark camp" stores `{km, at}` in localStorage at each overnight stop. Rows show each day's
+distance (next mark − this mark) and, for the open day, **km done so far** from your live
+position — the running "how far today" read. Rows are numbered by **calendar date against
+the diary's day 1**, so a forgotten camp leaves a gap (D2, D4) instead of renumbering
+every day after it. Marks come from the real on-trail position, never the simulated km.
+
+It used to drive `avgKmDay` → the finish projection; that coupling is what made a missed
+morning tap look like a scheduling problem. **Don't reconnect it.**
 
 ### Speed model (`useSpeed.ts` + `SpeedControl.vue`)
 **Start hour + end hour** (the daily walking window) and **km/day** (~25, Plan A's rate).
