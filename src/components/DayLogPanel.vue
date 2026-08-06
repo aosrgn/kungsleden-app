@@ -1,55 +1,63 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { DayMark } from '../composables/useDayLog'
+import type { NightCamp } from '../plan'
+import { addDays, startOfDay } from '../plan'
 
 const props = defineProps<{
-  marks: DayMark[]
+  camps: NightCamp[]
   positionKm: number | null
   trekStart: Date | null
+  now: Date
 }>()
-const emit = defineEmits<{ mark: []; undo: []; setKm: [i: number, km: number]; remove: [i: number] }>()
+const emit = defineEmits<{
+  mark: []
+  setKm: [i: number, km: number]
+  remove: [i: number]
+}>()
+
+// Night n ended trek day n, so its row is dated day n and carries that day's distance:
+// this camp's km minus the previous one's (the trailhead, km 0, for the first).
+const days = computed(() => {
+  const rows = props.camps.map((c, i) => ({
+    key: `n${c.night}`,
+    markIndex: c.markIndex,
+    n: c.night,
+    at: props.trekStart ? addDays(props.trekStart, c.night - 1) : new Date(c.at),
+    campKm: c.km,
+    km: Math.max(0, c.km - (i > 0 ? props.camps[i - 1].km : 0)),
+    inProgress: false,
+  }))
+
+  // The open day runs from the last camp to where you are. Suppressed until that day has
+  // actually begun, so an evening mark doesn't immediately sprout a 0.0 km row for tomorrow.
+  const last = props.camps[props.camps.length - 1]
+  if (last && props.trekStart && props.positionKm != null) {
+    const at = addDays(props.trekStart, last.night)
+    if (startOfDay(at).valueOf() <= startOfDay(props.now).valueOf()) {
+      rows.push({
+        key: 'open',
+        markIndex: -1,
+        n: last.night + 1,
+        at,
+        campKm: last.km,
+        km: Math.max(0, props.positionKm - last.km),
+        inProgress: true,
+      })
+    }
+  }
+  return rows
+})
+
+const total = computed(() => days.value.reduce((s, d) => s + d.km, 0))
 
 // Committed on change (not per keystroke) so a half-typed "4" doesn't momentarily move
 // the camp to km 4. A blank or unparseable value reverts to what's stored.
-function onKm(i: number, e: Event) {
+function onKm(markIndex: number, current: number, e: Event) {
   const el = e.target as HTMLInputElement
   const v = parseFloat(el.value.replace(',', '.'))
-  if (Number.isFinite(v) && v >= 0) emit('setKm', i, v)
-  else el.value = props.marks[i].km.toFixed(1)
+  if (Number.isFinite(v) && v >= 0) emit('setKm', markIndex, v)
+  else el.value = current.toFixed(1)
 }
-
-const DAY_MS = 86400000
-const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).valueOf()
-
-// Trek day number from the calendar date, NOT the mark's position in the list — a day you
-// forgot to mark leaves a gap in the numbering instead of silently renumbering every day
-// after it (which is why "today" read D3 on trek day 4).
-function trekDay(at: Date): number {
-  if (!props.trekStart) return 1
-  return Math.max(1, Math.round((midnight(at) - midnight(props.trekStart)) / DAY_MS) + 1)
-}
-
-// Each mark starts a day; its distance runs to the next mark, or (for the last,
-// in-progress day) to the current position — that last row is the live "km done today".
-const days = computed(() =>
-  props.marks.map((m, i) => {
-    const last = i === props.marks.length - 1
-    const endKm = last ? props.positionKm : props.marks[i + 1].km
-    const at = new Date(m.at)
-    return {
-      key: m.at,
-      i,
-      n: trekDay(at),
-      at,
-      campKm: m.km,
-      km: endKm == null ? null : Math.max(0, endKm - m.km),
-      inProgress: last,
-    }
-  }),
-)
-const total = computed(() =>
-  days.value.reduce((s, d) => s + (d.km ?? 0), 0),
-)
 
 const dayLabel = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'numeric' })
 </script>
@@ -58,17 +66,14 @@ const dayLabel = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'n
   <section class="daylog">
     <div class="top">
       <span class="head">Day log</span>
-      <div class="actions">
-        <button class="mark" :disabled="positionKm == null" @click="emit('mark')">Mark camp</button>
-        <button v-if="marks.length" class="undo" @click="emit('undo')">undo</button>
-      </div>
+      <button class="mark" :disabled="positionKm == null" @click="emit('mark')">Mark camp</button>
     </div>
 
     <ol v-if="days.length" class="days">
       <li v-for="d in days" :key="d.key">
         <span class="d">D{{ d.n }}</span>
         <span class="date">{{ dayLabel(d.at) }}</span>
-        <label class="camp">
+        <label v-if="!d.inProgress" class="camp">
           <span class="at">camp</span>
           <input
             :value="d.campKm.toFixed(1)"
@@ -76,18 +81,21 @@ const dayLabel = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'n
             step="0.1"
             min="0"
             inputmode="decimal"
-            @change="onKm(d.i, $event)"
+            @change="onKm(d.markIndex, d.campKm, $event)"
           />
         </label>
+        <span v-else class="camp" />
         <span class="km">
-          <template v-if="d.km == null">—</template>
-          <template v-else>{{ d.km.toFixed(1) }} km<span v-if="d.inProgress" class="sofar"> so far</span></template>
+          {{ d.km.toFixed(1) }} km<span v-if="d.inProgress" class="sofar"> so far</span>
         </span>
-        <button class="del" title="remove this camp" @click="emit('remove', d.i)">×</button>
+        <button v-if="!d.inProgress" class="del" title="remove this camp" @click="emit('remove', d.markIndex)">
+          ×
+        </button>
+        <span v-else class="del" />
       </li>
       <li v-if="days.length > 1" class="total">
-        <span class="d"></span><span class="date">total</span><span class="camp"></span>
-        <span class="km">{{ total.toFixed(1) }} km</span><span class="del"></span>
+        <span class="d" /><span class="date">total</span><span class="camp" />
+        <span class="km">{{ total.toFixed(1) }} km</span><span class="del" />
       </li>
     </ol>
     <p v-else class="empty">Tap “Mark camp” at each overnight stop to log daily distances.</p>
@@ -115,11 +123,6 @@ const dayLabel = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'n
   letter-spacing: 0.04em;
   opacity: 0.55;
 }
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
 .mark {
   padding: 0.3rem 0.7rem;
   border: 1px solid #0a3d2e;
@@ -129,19 +132,7 @@ const dayLabel = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'n
   font-size: 0.78rem;
   cursor: pointer;
 }
-.mark:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-.undo {
-  border: none;
-  background: transparent;
-  color: inherit;
-  opacity: 0.6;
-  font-size: 0.78rem;
-  text-decoration: underline;
-  cursor: pointer;
-}
+.mark:disabled { opacity: 0.4; cursor: default; }
 .days {
   list-style: none;
   margin: 0;
@@ -157,6 +148,13 @@ const dayLabel = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'n
   gap: 0.45rem;
   font-size: 0.85rem;
 }
+.days .d {
+  font-weight: 650;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.days .date { opacity: 0.6; font-size: 0.78rem; }
+.days .km { font-variant-numeric: tabular-nums; text-align: right; }
+.sofar { opacity: 0.55; }
 .camp {
   display: inline-flex;
   align-items: center;
@@ -186,13 +184,6 @@ const dayLabel = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'n
   padding: 0;
   cursor: pointer;
 }
-.days .d {
-  font-weight: 650;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-.days .date { opacity: 0.6; font-size: 0.78rem; }
-.days .km { font-variant-numeric: tabular-nums; text-align: right; }
-.sofar { opacity: 0.55; }
 .total {
   margin-top: 0.15rem;
   padding-top: 0.2rem;

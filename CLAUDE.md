@@ -46,38 +46,41 @@ The **day log feeds none of this** — see below. Nothing you forget to tap can 
 projection wrong.
 
 ### Day log (`useDayLog.ts` + `DayLogPanel.vue`) — a journal, not an input
-"Mark camp" stores `{km, at}` in localStorage at each overnight stop. Rows show each day's
-distance (next mark − this mark) and, for the open day, **km done so far** from your live
-position — the running "how far today" read. Rows are numbered by **calendar date against
-the diary's day 1**, so a forgotten camp leaves a gap (D2, D4) instead of renumbering
-every day after it. Marks come from the real on-trail position, never the simulated km.
-Each row's **camp km is editable** (and removable) — you'll tap "Mark camp" an hour up the
-trail sooner or later, and the number has to be correctable after the fact. Day 1 leaves
-the trailhead on an afternoon start, so it's easy to reach camp without ever opening the
-app: `ensureTrailhead` backfills a km-0 row on the diary's start date if the log begins
-later. Offered once (flag `kungsleden.daylog.trailhead`), matched by calendar day so an
-evening day-1 mark doesn't get a duplicate, and deleting it sticks.
+"Mark camp" stores `{km, at}` in localStorage at each overnight stop.
+
+**A camp belongs to a night, and night *n* is the one that ended trek day *n*.**
+`campsByNight` (in `plan.ts`) resolves marks to nights off the **hour** of the tap, not the
+date: before 12:00 you're standing in the camp you just slept in, so it closed *yesterday*;
+from midday on you've just pitched, so it closes *today*. Mark on arrival in the evening or
+over breakfast next morning — same night either way. One camp per night, **latest mark
+wins**, so re-marking corrects instead of duplicating (and supersedes the retired
+auto-inserted km-0 trailhead row, which older phones still have in storage).
+
+Rows are dated day *n* and carry that day's distance (this camp − the previous, or km 0 for
+day 1), so the log starts at D1 with no phantom mark. The open day runs from the last camp
+to your live position — the running "how far today" read — and is hidden until that day has
+begun, so an evening mark doesn't sprout a 0.0 km row for tomorrow. A forgotten camp leaves
+a gap in the numbering instead of renumbering everything after it. Each row's **camp km is
+editable** (and removable) — you'll tap "Mark camp" an hour up the trail sooner or later.
+Marks come from the real on-trail position, never the simulated km.
 
 It used to drive `avgKmDay` → the finish projection; that coupling is what made a missed
 morning tap look like a scheduling problem. **Don't reconnect it to the projection.**
 
 ### Real camps anchor the day (`realisedStops` in `plan.ts`)
-A mark taken on the morning of day *d+1* IS the camp that ended day *d*, so `realisedStops`
-rewrites each planned day-end camp to where you actually slept, wherever a mark exists.
+Fed the night camps above, `realisedStops` rewrites each planned day-end camp to where you
+actually slept, wherever one exists.
 That feeds `poiArrival`, so the day's crossing times run from the real camp: camping 1.5 km
 past the planned spot pulls the whole day's clock ~33 min earlier. Days not yet slept keep
 their planned camp; the sequence is forced non-decreasing so an overshoot can't run a day
 backwards; with no marks it returns the plan untouched. **`plannedKmAtTime` deliberately
 does NOT use this** — "vs Plan A" has to compare against Plan A.
 
-The route strip renders each mark as a squared-off ⛺ pin with the same signed km-from-you
-label as every other node. Pins are named for the **night they ended**, not the day they
-start — a mark made the morning of day *d* closed day *d−1* — so `⛺ Camp D1 · Aug 2→3`
-lands beside the diary's `🌙 Camp Day 1` for that same night, planned against actual. Each
-carries the distance walked to reach it (gap back to the previous mark, or the trailhead).
-The km-0 trailhead mark gets no pin: it isn't a camp, and Hemavan already sits at km 0.
-Note the day log numbers the *same* mark by the day it **starts** (D2 for Aug 3) — that row
-measures Aug 3's distance, so both numbers are right for what they label.
+The route strip renders each night camp as a squared-off ⛺ pin with the same signed
+km-from-you label as every other node, named for the night it closed — `⛺ Camp D1 ·
+Aug 2→3` lands beside the diary's `🌙 Camp Day 1` for that same night, planned against
+actual. Each carries the distance walked to reach it. Pin and day-log row now agree on the
+number, both keying off the night.
 
 ### Speed model (`useSpeed.ts` + `SpeedControl.vue`)
 **Start hour + end hour** (the daily walking window) and **km/day** (~25, Plan A's rate).

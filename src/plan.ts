@@ -135,19 +135,52 @@ export interface CampMark {
   at: number // epoch ms
 }
 
-// Plan A's camps with each day's END camp replaced by where you ACTUALLY slept, wherever
-// a camp mark exists for the following morning (a mark taken on day d+1 IS the camp that
-// ended day d). Feeds the per-day POI crossing times, so each day is measured from the
-// real camp rather than the planned one — camp 1.5 km past the planned spot and the
-// whole day's clock shifts with you. Days you haven't reached keep their planned camp.
-// Forced non-decreasing: overshooting a later planned camp must not run a day backwards.
-export function realisedStops(stops: PlanStop[], marks: CampMark[]): PlanStop[] {
-  if (!marks.length) return stops
-  const byMorning = new Map<number, number>()
-  for (const m of marks) byMorning.set(startOfDay(new Date(m.at)).valueOf(), m.km)
+// A camp belongs to a NIGHT, and night n is the one that ended trek day n. Which night a
+// mark records depends on the hour it was made: tap it in the morning and you're standing
+// in the camp you just slept in, so it closed YESTERDAY; tap it on arrival in the evening
+// and it closes TODAY. Keying off the date alone labels every evening mark a night early
+// and stacks it onto a night that already has a camp.
+const NIGHT_SPLIT_HOUR = 12
+const DAY_MS = 86400000
+
+export interface NightCamp {
+  night: number // = the trek day this camp ended
+  km: number
+  at: number
+  markIndex: number // back-reference for editing/removing the underlying mark
+}
+
+export function markNight(m: CampMark, trekStart: Date): number {
+  const at = new Date(m.at)
+  const day = Math.round((startOfDay(at).valueOf() - startOfDay(trekStart).valueOf()) / DAY_MS) + 1
+  return at.getHours() < NIGHT_SPLIT_HOUR ? day - 1 : day
+}
+
+// One camp per night, latest mark wins — so re-marking corrects a night instead of
+// duplicating it, and a stale auto-inserted trailhead row is superseded by the real camp.
+export function campsByNight(marks: CampMark[], trekStart: Date | null): NightCamp[] {
+  if (!trekStart) return []
+  const byNight = new Map<number, NightCamp>()
+  marks.forEach((m, markIndex) => {
+    const night = markNight(m, trekStart)
+    if (night < 1) return
+    const prev = byNight.get(night)
+    if (!prev || m.at >= prev.at) byNight.set(night, { night, km: m.km, at: m.at, markIndex })
+  })
+  return [...byNight.values()].sort((a, b) => a.night - b.night)
+}
+
+// Plan A's camps with each day's END camp replaced by where you ACTUALLY slept. Feeds the
+// per-day POI crossing times, so each day is measured from the real camp rather than the
+// planned one — camp 1.5 km past the planned spot and the whole day's clock shifts with
+// you. Days you haven't slept keep their planned camp. Forced non-decreasing: overshooting
+// a later planned camp must not run a day backwards.
+export function realisedStops(stops: PlanStop[], camps: NightCamp[]): PlanStop[] {
+  if (!camps.length) return stops
+  const byNight = new Map(camps.map((c) => [c.night, c.km]))
   let prev = 0
-  return stops.map((s) => {
-    const km = Math.max(prev, byMorning.get(addDays(s.date, 1).valueOf()) ?? s.km)
+  return stops.map((s, i) => {
+    const km = Math.max(prev, byNight.get(i + 1) ?? s.km)
     prev = km
     return { ...s, km }
   })

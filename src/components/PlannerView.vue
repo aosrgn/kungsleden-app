@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useGeolocation } from '../composables/useGeolocation'
 import { useNow } from '../composables/useNow'
 import { useSpeed } from '../composables/useSpeed'
 import { useDayLog } from '../composables/useDayLog'
 import { loadTrip, type Trip } from '../data/trip'
-import { planStops } from '../plan'
+import { planStops, campsByNight, addDays } from '../plan'
 import { createTrailIndex } from '../trail'
 import NowPanel from './NowPanel.vue'
 import TodayPanel from './TodayPanel.vue'
@@ -18,7 +18,7 @@ import GpxExport from './GpxExport.vue'
 const { status, coords, lastError, permState, isStandalone, locate } = useGeolocation()
 const now = useNow()
 const { startHour, endHour, kmDay } = useSpeed()
-const { marks, mark, setKm, remove, undo, ensureTrailhead } = useDayLog()
+const { marks, mark, setKm, remove } = useDayLog()
 
 function markCamp() {
   // Marks from the REAL on-trail position only — never the simulated km (§ below).
@@ -45,33 +45,26 @@ const trailIndex = computed(() => (trip.value ? createTrailIndex(trip.value.trai
 // their rows against it, so a day you forgot to mark leaves a gap instead of a reshuffle.
 const trekStart = computed(() => (trip.value ? (planStops(trip.value.diary)[0]?.date ?? null) : null))
 
-const DAY_MS = 86400000
-const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).valueOf()
-
-// The diary knows when the trek starts; the log only learns it once the trip has loaded.
-watch(trekStart, (d) => d && ensureTrailhead(d), { immediate: true })
 const monthDay = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'numeric' })
 
-// Camps for the route strip. A mark made on the morning of day d is the camp that ENDED
-// day d−1, so it's named for that night — landing it right beside the diary's planned camp
-// for the same night instead of a day out of step. Each carries the distance walked to
-// reach it: the gap back to the previous mark (or the trailhead, for the first camp).
-// The km-0 trailhead mark itself isn't a camp and gets no pin — Hemavan already sits there.
+// One camp per night, resolved from the marks. campsByNight decides which night a mark
+// records from the HOUR it was tapped, so marking on arrival in the evening and marking
+// over breakfast next morning both land on the same night instead of a night apart.
+const nightCamps = computed(() => campsByNight(marks.value, trekStart.value))
+
+// Strip pins, named for the night they closed so each lands beside the diary's planned
+// camp for that same night. Each carries the distance walked to reach it: the gap back to
+// the previous camp, or the km-0 trailhead for the first.
 const campPins = computed(() =>
-  marks.value.flatMap((m, i) => {
-    const at = new Date(m.at)
-    const started = trekStart.value
-      ? Math.round((midnight(at) - midnight(trekStart.value)) / DAY_MS) + 1
-      : 1
-    const night = started - 1
-    if (night < 1) return []
-    const eve = new Date(midnight(at) - DAY_MS)
+  nightCamps.value.map((c, i) => {
+    const eve = addDays(trekStart.value as Date, c.night - 1)
+    const morn = addDays(eve, 1)
     const span =
-      eve.getMonth() === at.getMonth()
-        ? `${monthDay(eve)}→${at.getDate()}`
-        : `${monthDay(eve)}→${monthDay(at)}`
-    const walked = Math.max(0, m.km - (i > 0 ? marks.value[i - 1].km : 0))
-    return [{ km: m.km, label: `Camp D${night} · ${span}`, note: `${walked.toFixed(1)} km walked` }]
+      eve.getMonth() === morn.getMonth()
+        ? `${monthDay(eve)}→${morn.getDate()}`
+        : `${monthDay(eve)}→${monthDay(morn)}`
+    const walked = Math.max(0, c.km - (i > 0 ? nightCamps.value[i - 1].km : 0))
+    return { km: c.km, label: `Camp D${c.night} · ${span}`, note: `${walked.toFixed(1)} km walked` }
   }),
 )
 const position = computed(() =>
@@ -163,12 +156,12 @@ const statusLabel: Record<typeof status.value, string> = {
     />
     <DayLogPanel
       v-if="trip"
-      :marks="marks"
+      :camps="nightCamps"
       :position-km="realPositionKm"
       :trek-start="trekStart"
+      :now="now"
       class="daylog-panel"
       @mark="markCamp"
-      @undo="undo"
       @set-km="setKm"
       @remove="remove"
     />
@@ -184,8 +177,8 @@ const statusLabel: Record<typeof status.value, string> = {
     <RouteStrip
       v-if="trip"
       :rows="trip.diary"
-      :camps="campPins"
-      :marks="marks"
+      :pins="campPins"
+      :night-camps="nightCamps"
       :position-km="positionKm"
       :now="now"
       :speed-kmh="madeGoodKmh"

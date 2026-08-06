@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { computed, nextTick, watch, useTemplateRef } from 'vue'
 import type { DiaryRow } from '../data/trip'
-import { planStops, poiArrival, realisedStops, type PoiArrival, type CampMark } from '../plan'
+import { planStops, poiArrival, realisedStops, type PoiArrival, type NightCamp } from '../plan'
 
 const props = defineProps<{
   rows: DiaryRow[]
-  camps?: { km: number; label: string; note: string }[]
+  pins?: { km: number; label: string; note: string }[]
   positionKm?: number | null
   now?: Date | null
   speedKmh?: number | null
   totalKm?: number | null
   startHour?: number | null
   endHour?: number | null
-  marks?: CampMark[]
+  nightCamps?: NightCamp[]
 }>()
 
 // Clock-time ETA is only meaningful for nodes reachable within a long day's walk;
@@ -24,10 +24,10 @@ const ETA_MAX_HOURS = 14
 const CAMP_TYPE = 'camp-mark'
 
 // Each day's crossing times run from the REAL camp that started it, where one is logged.
-const stops = computed(() => realisedStops(planStops(props.rows), props.marks ?? []))
+const stops = computed(() => realisedStops(planStops(props.rows), props.nightCamps ?? []))
 
 const campRows = computed<DiaryRow[]>(() =>
-  (props.camps ?? []).map((c) => ({
+  (props.pins ?? []).map((c) => ({
     icon: '⛺',
     name: c.label,
     type: CAMP_TYPE,
