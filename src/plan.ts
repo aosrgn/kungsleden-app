@@ -76,36 +76,15 @@ export function plannedKmAtTime(
   return last.km
 }
 
-// The inverse: when Plan A expects you to reach a given km. Read against your actual km
-// it says how far ahead/behind the plan you are *in time*, which is what the finish
-// projection needs — the plan's own ramp (7 km on day 1, 29 on day 7) then cancels out
-// instead of being mistaken for your pace.
-export function plannedTimeAtKm(
+// When Plan A sets off, and the moment it has you finishing (last camp, at the end hour).
+export function planSpan(
   stops: PlanStop[],
-  km: number,
   startHour: number,
   endHour: number,
-): Date | null {
+): { start: Date; end: Date } | null {
   if (!stops.length) return null
   const pts = planCurve(stops, startHour, endHour)
-  if (km <= pts[0].km) return new Date(pts[0].t)
-  const last = pts[pts.length - 1]
-  if (km >= last.km) return new Date(last.t)
-  for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1]
-    const b = pts[i]
-    if (km <= b.km && b.km > a.km) {
-      return new Date(a.t + ((km - a.km) / (b.km - a.km)) * (b.t - a.t))
-    }
-  }
-  return new Date(last.t)
-}
-
-// The moment Plan A has you finishing (last camp, at the day's end hour).
-export function planFinish(stops: PlanStop[], startHour: number, endHour: number): Date | null {
-  if (!stops.length) return null
-  const pts = planCurve(stops, startHour, endHour)
-  return new Date(pts[pts.length - 1].t)
+  return { start: new Date(pts[0].t), end: new Date(pts[pts.length - 1].t) }
 }
 
 export interface PoiArrival {

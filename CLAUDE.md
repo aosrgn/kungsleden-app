@@ -34,13 +34,21 @@ the device position projected onto the trail line.
 
 ### The finish projection is plan-relative (`plan.ts` + `OnTimePanel.vue`)
 Only two inputs: **current position** and **current date**, matched against Plan A.
-`ratio = your km ÷ plannedKmAtTime(now)`, then `finish = now + (plan time still owed from
-your km) ÷ ratio`. Because both sides of the ratio span the same days, **Plan A's ease-in
+`ratio = your km ÷ plannedKmAtTime(now)`, then the finish is plain distance ÷ rate:
+`finish = now + planTimeLeft × (yourKmLeft ÷ planKmLeft) ÷ ratio`, borrowing the plan's own
+remaining rate so its day-by-day shape is kept (the long middle days cost more than the
+ease-in ones). Because both sides of the ratio span the same days, **Plan A's ease-in
 cancels out** — the plan does 7/18/21 km on days 1–3 and ~27 thereafter, so anything that
 extrapolates a measured km/day reads those short days as "slow" and predicts a missed
 flight while you are in fact ahead. That was the old day-log model's fatal flaw. The ratio
 is clamped to 0.4–2.5, and it is unreliable for the first 2–3 days (small denominator) —
 it settles from roughly day 4.
+
+**Measure the remaining span from `now`, never from the plan-time of your km.** That
+earlier moment usually falls on a previous day, so the span back to the finish re-counts a
+night already slept — worth ~15 h of invented lateness every morning. The invariant to
+protect: parked at a planned camp exactly on plan, the projected finish must equal the plan
+finish at *any* hour, including across the overnight (68-case check in the scratchpad).
 
 The **day log feeds none of this** — see below. Nothing you forget to tap can make the
 projection wrong.

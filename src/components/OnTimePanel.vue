@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { DiaryRow } from '../data/trip'
-import { planStops, plannedKmAtTime, plannedTimeAtKm, planFinish } from '../plan'
+import { planStops, plannedKmAtTime, planSpan } from '../plan'
 
 const props = defineProps<{
   diary: DiaryRow[]
@@ -41,16 +41,33 @@ const ratio = computed(() => {
   return Math.min(RATIO_RANGE.max, Math.max(RATIO_RANGE.min, props.positionKm / planned))
 })
 
-// Projected Abisko finish: the plan-time still owed from where you actually are, walked
-// at your demonstrated share of the plan's pace.
+// Projected Abisko finish, as plain distance ÷ rate: you have `yourKmLeft` to walk, and
+// you cover ground at the plan's remaining rate scaled by your ratio.
+//
+// It must be measured from NOW, never from "the time the plan had you at your km" — that
+// earlier moment is usually on a previous day, so the span back to the finish re-counts a
+// night you have already slept. That charged ~15 h of phantom lateness every morning:
+// parked at the planned camp, exactly on plan, the finish drifted from Aug 19 18:00 to
+// Aug 20 09:00 across a single night without moving.
 const projectedFinish = computed(() => {
   const r = ratio.value
-  if (r == null || props.positionKm == null || !stops.value.length) return null
-  const owedFrom = plannedTimeAtKm(stops.value, props.positionKm, props.startHour, props.endHour)
-  const end = planFinish(stops.value, props.startHour, props.endHour)
-  if (owedFrom == null || end == null) return null
-  const remainingPlanMs = Math.max(0, end.valueOf() - owedFrom.valueOf())
-  return new Date(props.now.valueOf() + remainingPlanMs / r)
+  const span = stops.value.length ? planSpan(stops.value, props.startHour, props.endHour) : null
+  if (r == null || span == null || props.positionKm == null || plannedNow.value == null) return null
+
+  const yourKmLeft = Math.max(0, props.totalKm - props.positionKm)
+  const planKmLeft = props.totalKm - plannedNow.value
+  const planMsLeft = span.end.valueOf() - props.now.valueOf()
+
+  // Inside the plan's own window: borrow its remaining rate, which keeps the day-by-day
+  // shape (the long middle days cost more than the ease-in ones).
+  if (planKmLeft > 0.5 && planMsLeft > 0) {
+    return new Date(props.now.valueOf() + (planMsLeft * (yourKmLeft / planKmLeft)) / r)
+  }
+  // Past the plan's last day, or the plan is already at Abisko: no remaining schedule to
+  // borrow, so fall back to its overall average rate, still scaled by your ratio.
+  const planDays = (span.end.valueOf() - span.start.valueOf()) / DAY_MS
+  const kmPerDay = (props.totalKm / Math.max(1, planDays)) * r
+  return new Date(props.now.valueOf() + (yourKmLeft / kmPerDay) * DAY_MS)
 })
 
 // + = ahead of Plan A: how many km past where the plan expects you right now (which
