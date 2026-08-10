@@ -76,17 +76,18 @@ const kmDelta = computed(() =>
   plannedNow.value == null || props.positionKm == null ? null : props.positionKm - plannedNow.value,
 )
 
-// Express the km gap as walking time at your made-good speed — a concrete "you're N
-// hours ahead/behind" rather than an abstract ratio.
+// The gap both ways: the raw km (what you have to make up) and what that costs in walking
+// time at your made-good speed — concrete, rather than an abstract ratio.
 const scheduleText = computed(() => {
   const km = kmDelta.value
   if (km == null || props.madeGoodKmh <= 0) return null
   const hours = Math.abs(km) / props.madeGoodKmh
   if (hours < 0.5) return 'on schedule'
   const dir = km > 0 ? 'ahead' : 'behind'
-  if (hours < 10) return `${hours.toFixed(1)} h ${dir}`
-  if (hours < 23.5) return `${Math.round(hours)} h ${dir}`
-  return `${(hours / 24).toFixed(1)} days ${dir}`
+  const dist = `${Math.abs(km).toFixed(1)} km`
+  const time =
+    hours < 10 ? `${hours.toFixed(1)} h` : hours < 23.5 ? `${Math.round(hours)} h` : `${(hours / 24).toFixed(1)} days`
+  return `${dist} · ${time} ${dir}`
 })
 const scheduleDir = computed(() => {
   const km = kmDelta.value
