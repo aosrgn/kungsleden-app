@@ -118,12 +118,16 @@ function etaLabel(node: DiaryRow): string | null {
 // On the first fix, bring the here-marker into view; later fixes just shift the
 // marker between nodes as you walk, without yanking the scroll position.
 const stripEl = useTemplateRef<HTMLElement>('stripEl')
+
+function scrollToHere(behavior: ScrollBehavior = 'smooth') {
+  stripEl.value?.querySelector('.here')?.scrollIntoView({ block: 'center', behavior })
+}
+defineExpose({ scrollToHere })
+
 watch(
   () => props.positionKm,
   (now, prev) => {
-    if (now != null && prev == null) {
-      nextTick(() => stripEl.value?.querySelector('.here')?.scrollIntoView({ block: 'center' }))
-    }
+    if (now != null && prev == null) nextTick(() => scrollToHere('auto'))
   },
 )
 </script>

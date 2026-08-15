@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import { useGeolocation } from '../composables/useGeolocation'
 import { useNow } from '../composables/useNow'
 import { useSpeed } from '../composables/useSpeed'
@@ -96,6 +96,12 @@ function clearSim() {
   simKmInput.value = ''
 }
 
+// The strip runs the length of the route, so scrolling back to yourself (or to the panels
+// at the top) is a long drag on a phone. Two thumb-reachable jumps instead.
+const strip = useTemplateRef<{ scrollToHere: (b?: ScrollBehavior) => void }>('strip')
+const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
+const scrollToHere = () => strip.value?.scrollToHere()
+
 const statusLabel: Record<typeof status.value, string> = {
   idle: '',
   locating: 'locating…',
@@ -176,6 +182,7 @@ const statusLabel: Record<typeof status.value, string> = {
     <GpxExport class="gpx-export" />
     <RouteStrip
       v-if="trip"
+      ref="strip"
       :rows="trip.diary"
       :pins="campPins"
       :night-camps="nightCamps"
@@ -201,6 +208,18 @@ const statusLabel: Record<typeof status.value, string> = {
       <div>permission: {{ permState }}</div>
       <div v-if="lastError">err: {{ lastError }}</div>
     </div>
+
+    <nav v-if="trip" class="jump" aria-label="Jump">
+      <button title="Back to the top" aria-label="Back to the top" @click="scrollToTop">↑</button>
+      <button
+        :disabled="positionKm == null"
+        title="Scroll to your position"
+        aria-label="Scroll to your position"
+        @click="scrollToHere"
+      >
+        ◎
+      </button>
+    </nav>
   </main>
 </template>
 
@@ -291,4 +310,27 @@ button {
   font-size: 0.85rem;
   cursor: pointer;
 }
+
+/* Thumb-reachable jumps, clear of the build badge in the bottom-right corner. */
+.jump {
+  position: fixed;
+  right: 0.7rem;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 3rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 900;
+}
+.jump button {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  line-height: 1;
+  background: color-mix(in srgb, #0a3d2e 92%, transparent);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.28);
+  backdrop-filter: blur(6px);
+}
+.jump button:disabled { opacity: 0.35; cursor: default; }
 </style>
