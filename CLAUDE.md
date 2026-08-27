@@ -117,6 +117,15 @@ vendored in **`tools/`** and wired to npm scripts (run from the repo root, any N
 `src/**`). Run `npm run diary` after any coord/km edit so the km stay consistent with the
 trail line. All generators are idempotent — a rerun with no input change is a no-op.
 
+**Post-trek: daily tracks for Apple Health** (`dailyTracks.ts` + the second `GpxExport`
+button). The field GPX is a planned route with waypoints and no times, so nothing can turn
+it into a workout. `dailyTracks()` instead rebuilds one timestamped GPX **track** per
+walking day from `trail.slice(fromKm, toKm)` + the day log's night camps, at constant pace
+across the walking window. Share-sheets all of them at once; import via RunGap → Health to
+get the trek as hikes with a route. The closing day (ends at Abisko, so no camp mark) uses
+`finishKm` from your position — set "simulate km" to 460 once home to include it.
+Timestamps are **reconstructed, not recorded**; fine as a personal record, not a GPS trace.
+
 **Getting the GPX onto the phone:** `GpxExport.vue` fetches the precached GPX and hands it
 to `navigator.share({files})` → the iOS share sheet → Garmin/Footpath/Guru, falling back to
 an `<a download>` where Web Share can't take files. Fetching the raw file directly doesn't

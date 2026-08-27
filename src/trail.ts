@@ -23,9 +23,17 @@ export interface TrailProjection {
   offsetKm: number // perpendicular distance from the trail line
 }
 
+export interface TrailPointAtKm {
+  lat: number
+  lng: number
+  km: number
+}
+
 export interface TrailIndex {
   totalKm: number
   project(lat: number, lng: number): TrailProjection
+  /** The trail between two km marks: interpolated endpoints plus every vertex between. */
+  slice(fromKm: number, toKm: number): TrailPointAtKm[]
 }
 
 export function createTrailIndex(trail: TrailPoint[]): TrailIndex {
@@ -59,5 +67,29 @@ export function createTrailIndex(trail: TrailPoint[]): TrailIndex {
     return { km: bestKm, offsetKm: bestD / 1000 }
   }
 
-  return { totalKm, project }
+  // Position at a km mark, interpolated along the segment it falls in.
+  function at(km: number): TrailPointAtKm {
+    const t = Math.min(totalKm, Math.max(0, km))
+    let i = 1
+    while (i < cum.length - 1 && cum[i] < t) i++
+    const a = trail[i - 1]
+    const b = trail[i]
+    const span = cum[i] - cum[i - 1]
+    const f = span > 0 ? (t - cum[i - 1]) / span : 0
+    return { lng: a[0] + (b[0] - a[0]) * f, lat: a[1] + (b[1] - a[1]) * f, km: t }
+  }
+
+  function slice(fromKm: number, toKm: number): TrailPointAtKm[] {
+    const lo = Math.min(totalKm, Math.max(0, fromKm))
+    const hi = Math.min(totalKm, Math.max(0, toKm))
+    if (hi - lo < 1e-6) return []
+    const out: TrailPointAtKm[] = [at(lo)]
+    for (let i = 0; i < trail.length; i++) {
+      if (cum[i] > lo && cum[i] < hi) out.push({ lng: trail[i][0], lat: trail[i][1], km: cum[i] })
+    }
+    out.push(at(hi))
+    return out
+  }
+
+  return { totalKm, project, slice }
 }

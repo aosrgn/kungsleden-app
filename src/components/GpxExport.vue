@@ -1,5 +1,17 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import type { TrailIndex } from '../trail'
+import type { NightCamp } from '../plan'
+import { dailyTracks } from '../dailyTracks'
+
+const props = defineProps<{
+  trail: TrailIndex | null
+  camps: NightCamp[]
+  trekStart: Date | null
+  startHour: number
+  endHour: number
+  finishKm: number | null
+}>()
 
 // Hands the regenerated field map to the phone. iOS renders a fetched .gpx inline rather
 // than downloading it, so the share sheet is the only route that lands the file in
@@ -26,13 +38,54 @@ onMounted(() => {
   fetchFile().then((f) => (file = f)).catch(() => {})
 })
 
-function fallbackDownload(f: File) {
+function fallbackDownload(f: File, name = FILE_NAME) {
   const url = URL.createObjectURL(f)
   const a = document.createElement('a')
   a.href = url
-  a.download = FILE_NAME
+  a.download = name
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 10_000)
+}
+
+// One timestamped track per walking day, rebuilt from the trail line + the day log, for
+// importing the trek into Apple Health as hikes with a route (see dailyTracks.ts).
+const tracks = computed(() =>
+  props.trail
+    ? dailyTracks({
+        trail: props.trail,
+        camps: props.camps,
+        trekStart: props.trekStart,
+        startHour: props.startHour,
+        endHour: props.endHour,
+        finishKm: props.finishKm,
+      })
+    : [],
+)
+const trackState = ref<'idle' | 'done' | 'error'>('idle')
+const trackDetail = ref('')
+
+async function exportTracks() {
+  trackDetail.value = ''
+  try {
+    const files = tracks.value.map(
+      (t) => new File([t.gpx], t.fileName, { type: 'application/gpx+xml' }),
+    )
+    if (!files.length) throw new Error('no logged days')
+    if (navigator.canShare?.({ files })) {
+      await navigator.share({ files, title: 'Kungsleden daily tracks' })
+    } else {
+      // No multi-file Web Share (desktop): fall through to plain downloads.
+      for (const f of files) fallbackDownload(f, f.name)
+    }
+    trackState.value = 'done'
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') {
+      trackState.value = 'idle'
+      return
+    }
+    trackState.value = 'error'
+    trackDetail.value = (e as Error).message
+  }
 }
 
 async function exportGpx() {
@@ -67,6 +120,16 @@ async function exportGpx() {
     <span v-if="state === 'done'" class="note">sent — open in your nav app</span>
     <span v-else-if="state === 'error'" class="note err">failed: {{ detail }}</span>
     <span v-else class="note">share into Garmin · Footpath · Guru</span>
+
+    <template v-if="tracks.length">
+      <button class="wide" @click="exportTracks">Export {{ tracks.length }} daily tracks</button>
+      <span v-if="trackState === 'done'" class="note">sent — import into RunGap → Health</span>
+      <span v-else-if="trackState === 'error'" class="note err">failed: {{ trackDetail }}</span>
+      <span v-else class="note">
+        {{ tracks[0].km.toFixed(0) }}–{{ tracks[tracks.length - 1].km.toFixed(0) }} km/day ·
+        times are reconstructed, not recorded
+      </span>
+    </template>
   </section>
 </template>
 
@@ -90,6 +153,7 @@ async function exportGpx() {
   cursor: pointer;
 }
 .gpx button:disabled { opacity: 0.6; cursor: default; }
+.gpx button.wide { margin-top: 0.15rem; }
 .note { font-size: 0.75rem; opacity: 0.65; }
 .note.err { color: #c2410c; opacity: 1; }
 </style>

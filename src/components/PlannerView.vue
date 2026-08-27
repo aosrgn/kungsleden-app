@@ -179,7 +179,15 @@ const statusLabel: Record<typeof status.value, string> = {
       :made-good-kmh="madeGoodKmh"
       class="speed-control"
     />
-    <GpxExport class="gpx-export" />
+    <GpxExport
+      class="gpx-export"
+      :trail="trailIndex"
+      :camps="nightCamps"
+      :trek-start="trekStart"
+      :start-hour="startHour"
+      :end-hour="endHour"
+      :finish-km="positionKm"
+    />
     <RouteStrip
       v-if="trip"
       ref="strip"
